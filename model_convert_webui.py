@@ -929,7 +929,7 @@ def html_page() -> str:
       <h1>8735(AMB82) Teachable Machine 模型轉換</h1>
       <p>1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
       <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>network_binary.nb</code> 的下載路徑，回復到指定的 Mail。</p>
-      <p>專案 GitHub：<a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">youjunjer/8735-AMB82--model-convert</a></p>
+      <p><a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">8735(AMB82) Teachable Machine 模型轉換(Github repo)</a></p>
     </section>
     <section class="grid">
       <section class="card">

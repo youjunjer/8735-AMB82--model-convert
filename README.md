@@ -173,6 +173,10 @@ docker images
 2. 可存取對應的私有 package / repo
 3. 有一組 GitHub PAT
 
+官方文件：
+
+- [Acuity Toolkit Docker Installation](https://ameba-doc-ai-video-analytics-doc.readthedocs-hosted.com/en/latest/user_manual/Acuity_tool/Acuity_installation_docker.html)
+
 PAT 最少建議包含：
 
 - `read:packages`
