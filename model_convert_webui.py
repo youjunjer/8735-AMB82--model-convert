@@ -36,9 +36,13 @@ def load_env_file(path: Path) -> None:
 load_env_file(BASE_DIR / ".env")
 
 
-JOB_ROOT = BASE_DIR / "webui_jobs"
+DEFAULT_DATA_ROOT = BASE_DIR if os.name == "nt" else Path(os.getenv("MODEL_DATA_ROOT", str(Path.home() / ".local/share/amb82-model-convert")))
+DATA_ROOT = Path(os.getenv("MODEL_DATA_ROOT", str(DEFAULT_DATA_ROOT))).expanduser()
+DATA_ROOT.mkdir(parents=True, exist_ok=True)
+
+JOB_ROOT = DATA_ROOT / "webui_jobs"
 JOB_ROOT.mkdir(parents=True, exist_ok=True)
-SERVICE_STATE_PATH = BASE_DIR / "service_state.json"
+SERVICE_STATE_PATH = DATA_ROOT / "service_state.json"
 
 WSL_DISTRO = os.getenv("MODEL_WSL_DISTRO", "AMB_Model").strip() or "AMB_Model"
 WEBUI_HOST = os.getenv("MODEL_WEBUI_HOST", "127.0.0.1")
@@ -926,10 +930,9 @@ def html_page() -> str:
   </div>
   <main>
     <section class="card hero">
-      <h1>8735(AMB82) Teachable Machine 模型轉換</h1>
+      <h1>8735(AMB82) Teachable Machine 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
       <p>1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
       <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>network_binary.nb</code> 的下載路徑，回復到指定的 Mail。</p>
-      <p><a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">8735(AMB82) Teachable Machine 模型轉換(Github repo)</a></p>
     </section>
     <section class="grid">
       <section class="card">
