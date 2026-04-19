@@ -1,0 +1,16 @@
+﻿[Unit]
+Description=8735(AMB82) Teachable Machine Model Convert WebUI
+After=network.target docker.service
+Wants=network.target docker.service
+
+[Service]
+Type=simple
+User=youadmin
+WorkingDirectory=/mnt/f/GoogleDrv/P_程式開發/202604_AMB模型轉換
+Environment=MODEL_WSL_DISTRO=AMB_Model
+ExecStart=/bin/bash /mnt/f/GoogleDrv/P_程式開發/202604_AMB模型轉換/run_model_convert_webui_wsl.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

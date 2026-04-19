@@ -1,0 +1,8 @@
+openai>=1.108.1
+playwright>=1.54.0
+fastapi>=0.116.0
+uvicorn>=0.35.0
+requests>=2.32.0
+pywinauto>=0.6.9
+pillow>=12.2.0
+python-multipart>=0.0.20
