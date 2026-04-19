@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import queue
@@ -11,6 +11,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from email.message import EmailMessage
+from email.utils import formataddr
 from pathlib import Path
 
 import uvicorn
@@ -163,6 +164,43 @@ def build_download_url(job_id: str) -> str:
     return f"{WEBUI_BASE_URL}/api/jobs/{job_id}/download"
 
 
+def build_received_mail_subject(job: JobRecord) -> str:
+    return f"[MQTTGO] 已收到模型轉換工作 - {job.job_id}"
+
+
+def build_received_mail_text_body(job: JobRecord) -> str:
+    return (
+        "您好，\n\n"
+        "我們已收到您的模型轉換工作，系統將依序排隊處理。\n\n"
+        f"工作編號：{job.job_id}\n"
+        f"上傳檔案：{job.filename}\n"
+        f"收到時間：{job.created_at}\n"
+        f"校正圖片：{job.calibration_count} 張\n\n"
+        "目前工作已建立，請等候轉換完成後，我們會再寄送結果通知與下載連結。\n"
+    )
+
+
+def build_received_mail_html_body(job: JobRecord) -> str:
+    return f"""\
+<!doctype html>
+<html lang="zh-Hant">
+<body style="margin:0;padding:24px;background:#f6f6f6;font-family:Segoe UI,Microsoft JhengHei,sans-serif;color:#2b2b2b;">
+  <div style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #d7d7d7;">
+    <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">NMKING小霸王實驗室</div>
+    <div style="padding:24px 22px;">
+      <h2 style="margin:0 0 14px;font-size:26px;">已收到您的模型轉換工作。</h2>
+      <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
+      <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
+      <p style="margin:0 0 10px;">收到時間：{job.created_at}</p>
+      <p style="margin:0 0 18px;">校正圖片：{job.calibration_count} 張</p>
+      <p style="margin:0 0 18px;">目前工作已建立，請等候轉換完成後，我們會再寄送結果通知與下載連結。</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+
 def build_mail_subject(job: JobRecord) -> str:
     return f"[MQTTGO] 模型轉換{'完成' if job.status == 'completed' else '失敗'} - {job.job_id}"
 
@@ -235,14 +273,18 @@ def build_mail_html_body(job: JobRecord) -> str:
           <tr>
             <td style="padding:6px;">
               <a href="https://mqttgo.io" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
-                <img src="cid:mqttgo_icon" alt="mqttgo.io" style="width:52px;height:52px;display:block;margin-bottom:8px;object-fit:contain;">
+                <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;margin:0 0 10px 0;overflow:hidden;">
+                  <img src="cid:mqttgo_icon" alt="mqttgo.io" style="width:56px;height:56px;display:block;object-fit:contain;">
+                </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.io</div>
                 <div style="font-size:12px;color:#6b7280;">免費匿名的 mqtt 服務</div>
               </a>
             </td>
             <td style="padding:6px;">
               <a href="https://mqttgo.vip" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
-                <img src="cid:mqttgovip_icon" alt="mqttgo.vip" style="width:52px;height:52px;display:block;margin-bottom:8px;object-fit:contain;">
+                <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;margin:0 0 10px 0;overflow:hidden;">
+                  <img src="cid:mqttgovip_icon" alt="mqttgo.vip" style="width:56px;height:56px;display:block;object-fit:contain;">
+                </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.vip</div>
                 <div style="font-size:12px;color:#6b7280;">專業的 mqtt 服務</div>
               </a>
@@ -251,14 +293,16 @@ def build_mail_html_body(job: JobRecord) -> str:
           <tr>
             <td style="padding:6px;">
               <a href="https://www.nmking.io" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
-                <img src="cid:nmking_icon" alt="nmking.io" style="width:52px;height:52px;display:block;margin-bottom:8px;object-fit:contain;">
+                <div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;margin:0 0 10px 0;overflow:hidden;">
+                  <img src="cid:nmking_icon" alt="nmking.io" style="width:56px;height:56px;display:block;object-fit:contain;">
+                </div>
                 <div style="font-weight:700;margin-bottom:4px;">nmking.io</div>
                 <div style="font-size:12px;color:#6b7280;">教學網站</div>
               </a>
             </td>
             <td style="padding:6px;">
               <a href="https://twgo.io" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
-                <div style="width:36px;height:36px;border-radius:999px;background:#E62457;color:#ffffff;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">T</div>
+                <div style="width:56px;height:56px;border-radius:999px;background:#E62457;color:#ffffff;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 0 10px 0;font-size:20px;">T</div>
                 <div style="font-weight:700;margin-bottom:4px;">twgo.io</div>
                 <div style="font-size:12px;color:#6b7280;">簡單免費轉址服務</div>
               </a>
@@ -273,18 +317,7 @@ def build_mail_html_body(job: JobRecord) -> str:
 """
 
 
-def send_job_email(job: JobRecord) -> None:
-    settings = MailSettings()
-    if not settings.enabled():
-        job.notification_status = "mail_not_configured"
-        return
-
-    message = EmailMessage()
-    message["Subject"] = build_mail_subject(job)
-    message["From"] = settings.from_email
-    message["To"] = job.email
-    message.set_content(build_mail_text_body(job), charset="utf-8")
-    message.add_alternative(build_mail_html_body(job), subtype="html", charset="utf-8")
+def _add_service_icons_to_html_part(message: EmailMessage) -> None:
     html_part = message.get_payload()[-1]
     for cid, icon_name in [
         ("mqttgo_icon", "mqttgo"),
@@ -298,6 +331,21 @@ def send_job_email(job: JobRecord) -> None:
         subtype = "png" if suffix == ".png" else "jpeg"
         html_part.add_related(path.read_bytes(), maintype="image", subtype=subtype, cid=f"<{cid}>")
 
+
+def send_email_message(subject: str, to_email: str, text_body: str, html_body: str, include_service_icons: bool = False) -> None:
+    settings = MailSettings()
+    if not settings.enabled():
+        raise RuntimeError("mail_not_configured")
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = formataddr(("NMKING小霸王實驗室", settings.from_email))
+    message["To"] = to_email
+    message.set_content(text_body, charset="utf-8")
+    message.add_alternative(html_body, subtype="html", charset="utf-8")
+    if include_service_icons:
+        _add_service_icons_to_html_part(message)
+
     if settings.use_ssl:
         with smtplib.SMTP_SSL(settings.host, settings.port, timeout=30) as server:
             if settings.username:
@@ -310,6 +358,31 @@ def send_job_email(job: JobRecord) -> None:
             if settings.username:
                 server.login(settings.username, settings.password)
             server.send_message(message)
+
+
+def send_received_email(job: JobRecord) -> None:
+    send_email_message(
+        build_received_mail_subject(job),
+        job.email,
+        build_received_mail_text_body(job),
+        build_received_mail_html_body(job),
+        include_service_icons=False,
+    )
+
+
+def send_job_email(job: JobRecord) -> None:
+    settings = MailSettings()
+    if not settings.enabled():
+        job.notification_status = "mail_not_configured"
+        return
+
+    send_email_message(
+        build_mail_subject(job),
+        job.email,
+        build_mail_text_body(job),
+        build_mail_html_body(job),
+        include_service_icons=True,
+    )
 
     job.notification_status = "sent"
 
@@ -408,7 +481,9 @@ def service_summary() -> dict[str, object]:
     return {
         "status_label": "轉換中" if running else "閒置",
         "queue_count": len(queued),
+        "queue_job_ids": [job.job_id for job in queued],
         "running_count": len(running),
+        "running_job_ids": [job.job_id for job in running],
         "completed_count": len(completed),
         "total_completed_count": int(app.state.metrics.get("total_completed_count", 0)),
         "failed_count": len(failed),
@@ -434,6 +509,13 @@ def worker_loop() -> None:
         run_job(job, zip_path, work_dir, calibration_dir, log_path, output_path)
         app.state.job_queue.task_done()
         refresh_queue_positions()
+
+
+def _send_received_email_background(job: JobRecord) -> None:
+    try:
+        send_received_email(job)
+    except Exception:
+        pass
 
 
 def html_page() -> str:
@@ -725,15 +807,51 @@ def html_page() -> str:
       gap: 10px;
       flex-wrap: wrap;
     }
+    .queue-list {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .queue-list strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #111827;
+      font-size: 14px;
+    }
+    .queue-job-ids {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .queue-job-id {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #dbeafe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .queue-empty {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
     .service-links {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
     }
     .service-link {
-      display: grid;
-      gap: 8px;
+      position: relative;
+      display: block;
       padding: 16px;
+      padding-top: 88px;
+      min-height: 168px;
       border: 1px solid #d1d5db;
       background: #fafafa;
       color: inherit;
@@ -744,9 +862,12 @@ def html_page() -> str:
       text-decoration: none;
     }
     .service-icon {
-      width: 72px;
-      height: 72px;
-      display: inline-flex;
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 64px;
+      height: 64px;
+      display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 12px;
@@ -756,14 +877,6 @@ def html_page() -> str:
       font-size: 20px;
       font-weight: 700;
       overflow: hidden;
-    }
-    .service-icon.wide {
-      width: 132px;
-      height: 52px;
-      border: 0;
-      background: transparent;
-      border-radius: 0;
-      justify-content: flex-start;
     }
     .service-icon img {
       width: 100%;
@@ -778,10 +891,13 @@ def html_page() -> str:
       font-size: 1.1rem;
     }
     .service-link strong {
+      display: block;
       font-size: 16px;
       color: #111827;
+      margin-bottom: 8px;
     }
     .service-link span {
+      display: block;
       color: var(--muted);
       font-size: 13px;
       line-height: 1.6;
@@ -811,7 +927,8 @@ def html_page() -> str:
   <main>
     <section class="card hero">
       <h1>8735(AMB82) Teachable Machine 模型轉換</h1>
-      <p>上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>network_binary.nb</code> 的下載路徑，回復到指定的 Mail。</p>
+      <p>1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
+      <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>network_binary.nb</code> 的下載路徑，回復到指定的 Mail。</p>
     </section>
     <section class="grid">
       <section class="card">
@@ -867,6 +984,18 @@ def html_page() -> str:
             <div>目前排隊中：<strong id="service-queue-count">0</strong> 筆</div>
             <div>累計完成：<strong id="service-total-completed-count">0</strong> 筆</div>
           </div>
+          <div class="queue-list">
+            <strong>轉換中的工作編號</strong>
+            <div id="service-running-job-ids" class="queue-job-ids">
+              <span class="queue-empty">目前沒有轉換中的工作</span>
+            </div>
+          </div>
+          <div class="queue-list">
+            <strong>排隊中的工作編號</strong>
+            <div id="service-queue-job-ids" class="queue-job-ids">
+              <span class="queue-empty">目前沒有排隊工作</span>
+            </div>
+          </div>
         </div>
         <div class="actions" style="margin-top:16px;">
           <button id="refresh-jobs" class="secondary" type="button">重新整理工作列表</button>
@@ -879,14 +1008,14 @@ def html_page() -> str:
       </div>
       <div class="service-links">
         <a class="service-link" href="https://mqttgo.io" target="_blank" rel="noreferrer">
-          <div class="service-icon wide">
+          <div class="service-icon">
             <img src="/api/service-icon/mqttgo" alt="mqttgo.io logo">
           </div>
           <strong>mqttgo.io</strong>
           <span>免費匿名的 mqtt 服務</span>
         </a>
         <a class="service-link" href="https://mqttgo.vip" target="_blank" rel="noreferrer">
-          <div class="service-icon wide">
+          <div class="service-icon">
             <img src="/api/service-icon/mqttgovip" alt="mqttgo.vip logo">
           </div>
           <strong>mqttgo.vip</strong>
@@ -936,12 +1065,42 @@ def html_page() -> str:
       const runningCount = document.getElementById("service-running-count");
       const queueCount = document.getElementById("service-queue-count");
       const totalCompletedCount = document.getElementById("service-total-completed-count");
+      const runningJobIds = document.getElementById("service-running-job-ids");
+      const queueJobIds = document.getElementById("service-queue-job-ids");
 
       label.textContent = summary.status_label;
       queuePill.textContent = `排隊 ${summary.queue_count} 筆`;
       runningCount.textContent = summary.running_count;
       queueCount.textContent = summary.queue_count;
       totalCompletedCount.textContent = summary.total_completed_count;
+      runningJobIds.innerHTML = "";
+      if (summary.running_job_ids && summary.running_job_ids.length) {
+        for (const jobId of summary.running_job_ids) {
+          const chip = document.createElement("span");
+          chip.className = "queue-job-id";
+          chip.textContent = jobId;
+          runningJobIds.appendChild(chip);
+        }
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "queue-empty";
+        empty.textContent = "目前沒有轉換中的工作";
+        runningJobIds.appendChild(empty);
+      }
+      queueJobIds.innerHTML = "";
+      if (summary.queue_job_ids && summary.queue_job_ids.length) {
+        for (const jobId of summary.queue_job_ids) {
+          const chip = document.createElement("span");
+          chip.className = "queue-job-id";
+          chip.textContent = jobId;
+          queueJobIds.appendChild(chip);
+        }
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "queue-empty";
+        empty.textContent = "目前沒有排隊工作";
+        queueJobIds.appendChild(empty);
+      }
 
       main.classList.remove("status-resting", "status-busy");
       main.classList.add(summary.status_label === "轉換中" ? "status-busy" : "status-resting");
@@ -961,6 +1120,20 @@ def html_page() -> str:
       currentCaptchaId = data.captcha_id;
       document.getElementById("captcha-code").textContent = data.captcha_code;
       document.getElementById("captcha-input").value = "";
+    }
+
+    function resetUploadForm() {
+      document.getElementById("email").value = "";
+      document.getElementById("zip-file").value = "";
+      document.getElementById("calibration-files").value = "";
+      document.getElementById("captcha-input").value = "";
+      document.getElementById("zip-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("calibration-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("selected-zip-text").textContent = "";
+      document.getElementById("selected-zip-file").style.display = "none";
+      const preview = document.getElementById("calibration-preview");
+      preview.innerHTML = "";
+      preview.style.display = "none";
     }
 
     document.getElementById("refresh-jobs").addEventListener("click", refreshJobs);
@@ -1010,6 +1183,7 @@ def html_page() -> str:
         return;
       }
       showFormMessage(`工作已建立：${data.job_id}`, "info");
+      resetUploadForm();
       await refreshCaptcha();
       await refreshJobs();
     });
@@ -1185,6 +1359,7 @@ async def create_job(
     app.state.jobs[job_id] = record
     app.state.job_queue.put(job_id)
     refresh_queue_positions()
+    threading.Thread(target=_send_received_email_background, args=(record,), daemon=True).start()
     return JSONResponse({"ok": True, "job_id": job_id})
 
 
@@ -1231,3 +1406,4 @@ worker_thread.start()
 
 if __name__ == "__main__":
     main()
+
