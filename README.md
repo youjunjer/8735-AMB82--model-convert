@@ -1,4 +1,4 @@
-# 8735(AMB82) Teachable Machine 模型轉換服務
+﻿# 8735(AMB82) Teachable Machine 模型轉換服務
 
 這個專案提供一個可部署的 Web UI，讓使用者上傳 `converted_keras.zip` 與校正圖片，背景呼叫 Acuity Docker 轉換流程，最後產出 `network_binary.nb`，並透過 email 通知下載連結。
 
@@ -87,12 +87,6 @@ GitHub：
 wsl --import AMB_Model E:\wsl\AMB_Model <tar-or-rootfs>
 ```
 
-如果要建立固定帳號：
-
-```bash
-sudo adduser youadmin
-sudo usermod -aG sudo youadmin
-```
 
 建議安裝：
 
@@ -333,3 +327,4 @@ git push
 - Acuity GHCR 權限過期
 - Docker 在 WSL 內沒起來
 - `.env` 被覆蓋
+
