@@ -191,4 +191,6 @@ if [[ ! -f "$WORK_DIR/out_nbg_unify/network_binary.nb" ]]; then
   exit 3
 fi
 
-echo "NB_OK $WORK_DIR/out_nbg_unify/network_binary.nb"
+cp "$WORK_DIR/out_nbg_unify/network_binary.nb" "$WORK_DIR/out_nbg_unify/imgclassification.nb"
+
+echo "NB_OK $WORK_DIR/out_nbg_unify/imgclassification.nb"

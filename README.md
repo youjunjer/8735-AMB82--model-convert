@@ -1,6 +1,6 @@
 # 8735(AMB82) Teachable Machine 模型轉換服務
 
-這個專案提供一個可部署的 Web UI，讓使用者上傳 `converted_keras.zip` 與校正圖片，背景呼叫 Acuity Docker 轉換流程，最後產出 `network_binary.nb`，並透過 email 通知下載連結。
+這個專案提供一個可部署的 Web UI，讓使用者上傳 `converted_keras.zip` 與校正圖片，背景呼叫 Acuity Docker 轉換流程，最後產出 `imgclassification.nb`，並透過 email 通知下載連結。
 
 正式站：
 - [https://model.mqttgo.io](https://model.mqttgo.io)
@@ -56,7 +56,7 @@ GitHub：
 3. `h5 -> ONNX`
 4. `ONNX -> Acuity import`
 5. `quantize`
-6. `export -> network_binary.nb`
+6. `export -> imgclassification.nb`
 
 ### 4. 對外服務
 
@@ -77,7 +77,7 @@ GitHub：
 - `model_convert_webui.py`
   Web UI、API、排隊、mail 通知主程式
 - `zip_to_nb_wsl.sh`
-  `converted_keras.zip -> network_binary.nb` 的主轉換流程
+  `converted_keras.zip -> imgclassification.nb` 的主轉換流程
 - `zip_to_nb_wsl_gpu.sh`
   GPU 包裝版轉換腳本
 - `run_model_convert_webui_wsl.sh`
@@ -356,7 +356,7 @@ curl https://model.mqttgo.io/health
 1. 前台可建立工作
 2. 會先收到「已收到工作」通知
 3. 轉換完成後會收到成功信
-4. 下載連結可下載 `network_binary.nb`
+4. 下載連結可下載 `imgclassification.nb`
 
 ## Mail 通知邏輯
 

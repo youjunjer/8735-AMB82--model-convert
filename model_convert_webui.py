@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import queue
@@ -48,6 +48,8 @@ WSL_DISTRO = os.getenv("MODEL_WSL_DISTRO", "AMB_Model").strip() or "AMB_Model"
 WEBUI_HOST = os.getenv("MODEL_WEBUI_HOST", "127.0.0.1")
 WEBUI_PORT = int(os.getenv("MODEL_WEBUI_PORT", "8891"))
 WEBUI_BASE_URL = os.getenv("MODEL_WEBUI_BASE_URL", f"http://{WEBUI_HOST}:{WEBUI_PORT}").rstrip("/")
+ACUITY_OUTPUT_NB_FILENAME = "network_binary.nb"
+PUBLIC_OUTPUT_NB_FILENAME = "imgclassification.nb"
 SITE_ASSET_DIR = BASE_DIR / "site_assets"
 FAVICON_PATHS = {
     "ico": SITE_ASSET_DIR / "favicon.ico",
@@ -168,6 +170,14 @@ def build_download_url(job_id: str) -> str:
     return f"{WEBUI_BASE_URL}/api/jobs/{job_id}/download"
 
 
+def acuity_output_path(work_dir: Path) -> Path:
+    return work_dir / "out_nbg_unify" / ACUITY_OUTPUT_NB_FILENAME
+
+
+def public_output_path(work_dir: Path) -> Path:
+    return work_dir / "out_nbg_unify" / PUBLIC_OUTPUT_NB_FILENAME
+
+
 def build_received_mail_subject(job: JobRecord) -> str:
     return f"[MQTTGO] 已收到模型轉換工作 - {job.job_id}"
 
@@ -226,7 +236,7 @@ def build_mail_text_body(job: JobRecord) -> str:
             f"完成時間：{job.finished_at}\n"
             f"耗時：約 {job.elapsed_seconds} 秒\n"
             f"下載連結：{build_download_url(job.job_id)}\n\n"
-            "請使用上方連結下載 network_binary.nb。\n"
+            f"請使用上方連結下載 {PUBLIC_OUTPUT_NB_FILENAME}。\n"
             f"{links}"
         )
     return (
@@ -247,7 +257,7 @@ def build_mail_html_body(job: JobRecord) -> str:
         <p style="margin:0 0 10px;">下載連結：
           <a href="{build_download_url(job.job_id)}" style="color:#2563eb;">{build_download_url(job.job_id)}</a>
         </p>
-        <p style="margin:0 0 18px;">請使用上方連結下載 <code>network_binary.nb</code>。</p>
+        <p style="margin:0 0 18px;">請使用上方連結下載 <code>{PUBLIC_OUTPUT_NB_FILENAME}</code>。</p>
         """
         if job.status == "completed"
         else """
@@ -422,6 +432,7 @@ def build_wsl_command(zip_path: Path, work_dir: Path, calibration_dir: Path) -> 
 
 def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Path, log_path: Path, output_path: Path) -> None:
     command = build_wsl_command(zip_path, work_dir, calibration_dir)
+    generated_output_path = acuity_output_path(work_dir)
     started = datetime.now()
     with job.lock:
         job.status = "running"
@@ -448,7 +459,9 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
         job.return_code = return_code
         job.finished_at = now_text()
         job.elapsed_seconds = elapsed
-        if return_code == 0 and output_path.exists():
+        if return_code == 0 and generated_output_path.exists():
+            if generated_output_path != output_path:
+                shutil.copy2(generated_output_path, output_path)
             job.status = "completed"
             job.message = "轉換完成"
             job.output_path = str(output_path)
@@ -507,7 +520,7 @@ def worker_loop() -> None:
         work_dir = job_dir / "work"
         calibration_dir = job_dir / "calibration"
         log_path = job_dir / "job.log"
-        output_path = work_dir / "out_nbg_unify" / "network_binary.nb"
+        output_path = public_output_path(work_dir)
 
         refresh_queue_positions()
         run_job(job, zip_path, work_dir, calibration_dir, log_path, output_path)
@@ -925,14 +938,13 @@ def html_page() -> str:
         <div class="brand-mark">M</div>
         <div>MQTTGO</div>
       </div>
-      <div class="header-note">Teachable Machine 模型轉換服務</div>
     </div>
   </div>
   <main>
     <section class="card hero">
       <h1>8735(AMB82) Teachable Machine 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
       <p>1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
-      <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>network_binary.nb</code> 的下載路徑，回復到指定的 Mail。</p>
+      <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。</p>
     </section>
     <section class="grid">
       <section class="card">
@@ -1332,7 +1344,7 @@ async def create_job(
 
     zip_path = input_dir / "converted_keras.zip"
     log_path = job_dir / "job.log"
-    output_path = work_dir / "out_nbg_unify" / "network_binary.nb"
+    output_path = public_output_path(work_dir)
 
     with zip_path.open("wb") as target:
         shutil.copyfileobj(file.file, target)
@@ -1395,7 +1407,7 @@ async def download_output(job_id: str) -> FileResponse:
     return FileResponse(
         job.output_path,
         media_type="application/octet-stream",
-        filename=f"{job_id}_network_binary.nb",
+        filename=PUBLIC_OUTPUT_NB_FILENAME,
     )
 
 
@@ -1410,4 +1422,3 @@ worker_thread.start()
 
 if __name__ == "__main__":
     main()
-
