@@ -461,7 +461,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
         job.elapsed_seconds = elapsed
         if return_code == 0 and generated_output_path.exists():
             if generated_output_path != output_path:
-                shutil.copy2(generated_output_path, output_path)
+                shutil.copyfile(generated_output_path, output_path)
             job.status = "completed"
             job.message = "轉換完成"
             job.output_path = str(output_path)
