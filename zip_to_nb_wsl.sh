@@ -184,13 +184,14 @@ python3 $PEGASUS export ovxlib \
   --optimize VIP8000NANONI_PID0XAD \
   --pack-nbg-unify \
   --viv-sdk /opt/acuity/Vivante_IDE/VivanteIDE5.8.1.1/cmdtools
+
+cp /workspace/out_nbg_unify/network_binary.nb /workspace/out_nbg_unify/imgclassification.nb
+chmod -R a+rwX /workspace/out /workspace/out_nbg_unify
 "
 
 if [[ ! -f "$WORK_DIR/out_nbg_unify/network_binary.nb" ]]; then
   echo "network_binary.nb was not generated." >&2
   exit 3
 fi
-
-cp "$WORK_DIR/out_nbg_unify/network_binary.nb" "$WORK_DIR/out_nbg_unify/imgclassification.nb"
 
 echo "NB_OK $WORK_DIR/out_nbg_unify/imgclassification.nb"

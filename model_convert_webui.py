@@ -1400,12 +1400,20 @@ async def get_job_log(job_id: str) -> HTMLResponse:
 @app.get("/api/jobs/{job_id}/download")
 async def download_output(job_id: str) -> FileResponse:
     job = app.state.jobs.get(job_id)
+    fallback_output = JOB_ROOT / job_id / "work" / "out_nbg_unify" / PUBLIC_OUTPUT_NB_FILENAME
+    if not job and fallback_output.exists():
+        return FileResponse(
+            fallback_output,
+            media_type="application/octet-stream",
+            filename=PUBLIC_OUTPUT_NB_FILENAME,
+        )
     if not job:
         raise HTTPException(status_code=404, detail="找不到工作")
-    if not job.output_path or not Path(job.output_path).exists():
+    output_path = Path(job.output_path) if job.output_path else fallback_output
+    if not output_path.exists():
         raise HTTPException(status_code=404, detail="nb 尚未產生")
     return FileResponse(
-        job.output_path,
+        output_path,
         media_type="application/octet-stream",
         filename=PUBLIC_OUTPUT_NB_FILENAME,
     )
