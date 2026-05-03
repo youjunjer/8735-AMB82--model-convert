@@ -50,6 +50,7 @@ WEBUI_PORT = int(os.getenv("MODEL_WEBUI_PORT", "8891"))
 WEBUI_BASE_URL = os.getenv("MODEL_WEBUI_BASE_URL", f"http://{WEBUI_HOST}:{WEBUI_PORT}").rstrip("/")
 ACUITY_OUTPUT_NB_FILENAME = "network_binary.nb"
 PUBLIC_OUTPUT_NB_FILENAME = "imgclassification.nb"
+YOLO_PUBLIC_OUTPUT_NB_FILENAME = "yolov4_tiny.nb"
 SITE_ASSET_DIR = BASE_DIR / "site_assets"
 FAVICON_PATHS = {
     "ico": SITE_ASSET_DIR / "favicon.ico",
@@ -84,6 +85,7 @@ class JobRecord:
     filename: str
     email: str
     created_at: str
+    model_type: str = "teachable"
     status: str = "queued"
     message: str = "等待開始"
     started_at: str | None = None
@@ -104,6 +106,7 @@ class JobRecord:
             "filename": self.filename,
             "email": self.email,
             "created_at": self.created_at,
+            "model_type": self.model_type,
             "status": self.status,
             "message": self.message,
             "started_at": self.started_at,
@@ -178,15 +181,27 @@ def public_output_path(work_dir: Path) -> Path:
     return work_dir / "out_nbg_unify" / PUBLIC_OUTPUT_NB_FILENAME
 
 
+def public_output_path_for_model(work_dir: Path, model_type: str) -> Path:
+    if model_type == "yolo_darknet":
+        return work_dir / "out_nbg_unify" / YOLO_PUBLIC_OUTPUT_NB_FILENAME
+    return public_output_path(work_dir)
+
+
+def public_output_filename_for_model(model_type: str) -> str:
+    return YOLO_PUBLIC_OUTPUT_NB_FILENAME if model_type == "yolo_darknet" else PUBLIC_OUTPUT_NB_FILENAME
+
+
 def build_received_mail_subject(job: JobRecord) -> str:
     return f"[MQTTGO] 已收到模型轉換工作 - {job.job_id}"
 
 
 def build_received_mail_text_body(job: JobRecord) -> str:
+    model_label = "Teachable Machine" if job.model_type == "teachable" else "YOLO Darknet"
     return (
         "您好，\n\n"
         "我們已收到您的模型轉換工作，系統將依序排隊處理。\n\n"
         f"工作編號：{job.job_id}\n"
+        f"模型類型：{model_label}\n"
         f"上傳檔案：{job.filename}\n"
         f"收到時間：{job.created_at}\n"
         f"校正圖片：{job.calibration_count} 張\n\n"
@@ -195,6 +210,7 @@ def build_received_mail_text_body(job: JobRecord) -> str:
 
 
 def build_received_mail_html_body(job: JobRecord) -> str:
+    model_label = "Teachable Machine" if job.model_type == "teachable" else "YOLO Darknet"
     return f"""\
 <!doctype html>
 <html lang="zh-Hant">
@@ -204,6 +220,7 @@ def build_received_mail_html_body(job: JobRecord) -> str:
     <div style="padding:24px 22px;">
       <h2 style="margin:0 0 14px;font-size:26px;">已收到您的模型轉換工作。</h2>
       <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
+      <p style="margin:0 0 10px;">模型類型：{model_label}</p>
       <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
       <p style="margin:0 0 10px;">收到時間：{job.created_at}</p>
       <p style="margin:0 0 18px;">校正圖片：{job.calibration_count} 張</p>
@@ -228,6 +245,7 @@ def build_mail_text_body(job: JobRecord) -> str:
         "twgo.io：https://twgo.io\n"
     )
     if job.status == "completed":
+        output_name = public_output_filename_for_model(job.model_type)
         return (
             "您好，\n\n"
             "您的模型轉換已完成。\n\n"
@@ -236,7 +254,7 @@ def build_mail_text_body(job: JobRecord) -> str:
             f"完成時間：{job.finished_at}\n"
             f"耗時：約 {job.elapsed_seconds} 秒\n"
             f"下載連結：{build_download_url(job.job_id)}\n\n"
-            f"請使用上方連結下載 {PUBLIC_OUTPUT_NB_FILENAME}。\n"
+            f"請使用上方連結下載 {output_name}。\n"
             f"{links}"
         )
     return (
@@ -252,12 +270,13 @@ def build_mail_text_body(job: JobRecord) -> str:
 
 
 def build_mail_html_body(job: JobRecord) -> str:
+    output_name = public_output_filename_for_model(job.model_type)
     status_line = (
         f"""
         <p style="margin:0 0 10px;">下載連結：
           <a href="{build_download_url(job.job_id)}" style="color:#2563eb;">{build_download_url(job.job_id)}</a>
         </p>
-        <p style="margin:0 0 18px;">請使用上方連結下載 <code>{PUBLIC_OUTPUT_NB_FILENAME}</code>。</p>
+        <p style="margin:0 0 18px;">請使用上方連結下載 <code>{output_name}</code>。</p>
         """
         if job.status == "completed"
         else """
@@ -430,13 +449,39 @@ def build_wsl_command(zip_path: Path, work_dir: Path, calibration_dir: Path) -> 
     ]
 
 
+def build_yolo_darknet_stub_command(work_dir: Path) -> list[str]:
+    input_dir = work_dir.parent / "input"
+    cfg_path = input_dir / "model.cfg"
+    weights_path = input_dir / "model.weights"
+    if os.name == "nt":
+        script_path = to_wsl_path(BASE_DIR / "darknet_to_nb_wsl.sh")
+        cfg_wsl = to_wsl_path(cfg_path)
+        weights_wsl = to_wsl_path(weights_path)
+        work_wsl = to_wsl_path(work_dir)
+        calib_wsl = to_wsl_path(work_dir.parent / "calibration")
+        command = f"bash {shell_quote(script_path)} {shell_quote(cfg_wsl)} {shell_quote(weights_wsl)} {shell_quote(work_wsl)} {shell_quote(calib_wsl)}"
+        return ["wsl", "-d", WSL_DISTRO, "--", "bash", "-lc", command]
+
+    return [
+        "bash",
+        str((BASE_DIR / "darknet_to_nb_wsl.sh").resolve()),
+        str(cfg_path.resolve()),
+        str(weights_path.resolve()),
+        str(work_dir.resolve()),
+        str((work_dir.parent / "calibration").resolve()),
+    ]
+
+
 def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Path, log_path: Path, output_path: Path) -> None:
-    command = build_wsl_command(zip_path, work_dir, calibration_dir)
+    if job.model_type == "teachable":
+        command = build_wsl_command(zip_path, work_dir, calibration_dir)
+    else:
+        command = build_yolo_darknet_stub_command(work_dir)
     generated_output_path = acuity_output_path(work_dir)
     started = datetime.now()
     with job.lock:
         job.status = "running"
-        job.message = "WSL 轉換中"
+        job.message = "WSL 轉換中" if job.model_type == "teachable" else "YOLO Darknet 流程檢查中"
         job.started_at = now_text()
         job.queue_position = None
 
@@ -459,7 +504,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
         job.return_code = return_code
         job.finished_at = now_text()
         job.elapsed_seconds = elapsed
-        if return_code == 0 and generated_output_path.exists():
+        if job.model_type == "teachable" and return_code == 0 and generated_output_path.exists():
             if generated_output_path != output_path:
                 shutil.copyfile(generated_output_path, output_path)
             job.status = "completed"
@@ -467,6 +512,18 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
             job.output_path = str(output_path)
             job.notification_status = "ready_to_notify_success"
             increment_total_completed_count()
+        elif job.model_type == "yolo_darknet" and return_code == 0:
+            yolo_output_path = public_output_path_for_model(work_dir, job.model_type)
+            if yolo_output_path.exists():
+                job.status = "completed"
+                job.message = "轉換完成"
+                job.output_path = str(yolo_output_path)
+                job.notification_status = "ready_to_notify_success"
+                increment_total_completed_count()
+            else:
+                job.status = "failed"
+                job.message = "YOLO Darknet 轉換失敗，請查看 log"
+                job.notification_status = "ready_to_notify_failed"
         else:
             job.status = "failed"
             job.message = "轉換失敗，請查看 log"
@@ -520,7 +577,7 @@ def worker_loop() -> None:
         work_dir = job_dir / "work"
         calibration_dir = job_dir / "calibration"
         log_path = job_dir / "job.log"
-        output_path = public_output_path(work_dir)
+        output_path = public_output_path_for_model(work_dir, job.model_type)
 
         refresh_queue_positions()
         run_job(job, zip_path, work_dir, calibration_dir, log_path, output_path)
@@ -651,6 +708,26 @@ def html_page() -> str:
       background: #fff;
       font: inherit;
     }
+    select {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 44px 12px 14px;
+      border: 1px solid #b8bec7;
+      border-radius: 0;
+      background: #f8fafc;
+      color: #111827;
+      font: inherit;
+      font-size: 16px;
+      line-height: 1.4;
+      appearance: auto;
+    }
+    select:focus,
+    input[type=email]:focus,
+    input[type=text]:focus {
+      outline: 2px solid #bfdbfe;
+      outline-offset: 0;
+      border-color: #93c5fd;
+    }
     .dropzone {
       border: 1px dashed #bcbcbc;
       background: #fafafa;
@@ -741,6 +818,11 @@ def html_page() -> str:
       color: white;
       background: var(--accent);
       cursor: pointer;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      opacity: 0.8;
     }
     button.secondary { background: var(--accent-2); }
     .grid {
@@ -942,9 +1024,10 @@ def html_page() -> str:
   </div>
   <main>
     <section class="card hero">
-      <h1>8735(AMB82) Teachable Machine 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
-      <p>1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
-      <p>2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。</p>
+      <h1>8735(AMB82) 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
+      <p>目前提供 <strong>Teachable Machine</strong> 與 <strong>YOLO Darknet</strong> 兩個模型類型選項。</p>
+      <p id="hero-guide-1">1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
+      <p id="hero-guide-2">2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。</p>
     </section>
     <section class="grid">
       <section class="card">
@@ -952,19 +1035,46 @@ def html_page() -> str:
           <h2>建立轉換工作</h2>
           <span class="pill">單一 worker 排隊</span>
         </div>
-        <p class="hint">目前要求填 email、模型 zip 與至少一張校正圖片。轉換完成後的 email 通知流程先保留欄位，寄信設定下一步再接。</p>
+        <p id="form-hint" class="hint">目前要求填 email、模型 zip 與至少一張校正圖片。轉換完成後的 email 通知流程先保留欄位，寄信設定下一步再接。</p>
         <form id="upload-form" style="margin-top:14px;" novalidate>
+          <select id="model-type" name="model_type" required>
+            <option value="" selected>請選擇</option>
+            <option value="teachable">Teachable Machine</option>
+            <option value="yolo_darknet">YOLO Darknet</option>
+          </select>
           <input id="email" type="email" name="email" placeholder="請輸入通知 email" required>
-          <label class="dropzone" for="zip-file">
-            <strong>模型壓縮檔</strong>
-            <span>請選取 <code>converted_keras.zip</code></span>
-            <input id="zip-file" type="file" name="file" accept=".zip" style="display:none;">
-            <span id="zip-file-name">尚未選擇檔案</span>
-            <div id="selected-zip-file" class="selected-file">
-              <strong>目前選擇的模型</strong>
-              <code id="selected-zip-text"></code>
-            </div>
-          </label>
+          <div id="teachable-fields">
+            <label class="dropzone" for="zip-file">
+              <strong>模型壓縮檔</strong>
+              <span id="zip-help-text">請選取 <code>converted_keras.zip</code></span>
+              <input id="zip-file" type="file" name="file" accept=".zip" style="display:none;">
+              <span id="zip-file-name">尚未選擇檔案</span>
+              <div id="selected-zip-file" class="selected-file">
+                <strong>目前選擇的模型</strong>
+                <code id="selected-zip-text"></code>
+              </div>
+            </label>
+          </div>
+          <div id="yolo-darknet-fields" style="display:none;">
+            <label class="dropzone" for="yolo-cfg-file">
+              <strong>YOLO 設定檔</strong>
+              <span>請選取 <code>.cfg</code></span>
+              <input id="yolo-cfg-file" type="file" name="yolo_cfg_file" accept=".cfg" style="display:none;">
+              <span id="yolo-cfg-file-name">尚未選擇檔案</span>
+            </label>
+            <label class="dropzone" for="yolo-weights-file">
+              <strong>YOLO 權重檔</strong>
+              <span>請選取 <code>.weights</code></span>
+              <input id="yolo-weights-file" type="file" name="yolo_weights_file" accept=".weights" style="display:none;">
+              <span id="yolo-weights-file-name">尚未選擇檔案</span>
+            </label>
+            <label class="dropzone" for="yolo-classes-file">
+              <strong>YOLO 類別名稱</strong>
+              <span>可選，請選取 <code>classes.txt</code></span>
+              <input id="yolo-classes-file" type="file" name="yolo_classes_file" accept=".txt" style="display:none;">
+              <span id="yolo-classes-file-name">尚未選擇檔案</span>
+            </label>
+          </div>
           <label class="dropzone" for="calibration-files">
             <strong>校正圖片</strong>
             <span>至少 1 張，可多選 jpg / jpeg / png</span>
@@ -976,7 +1086,8 @@ def html_page() -> str:
             <div id="captcha-code" class="captcha-code">----</div>
             <input id="captcha-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="請輸入數字驗證碼" required>
           </div>
-          <button type="submit">開始轉換</button>
+          <button type="submit" disabled>開始轉換</button>
+          <div id="submit-hint" class="hint" style="margin-top:10px;">請先選擇模型類型</div>
         </form>
         <div id="submit-result" class="form-message" style="margin-top:12px;"></div>
       </section>
@@ -1138,36 +1249,102 @@ def html_page() -> str:
       document.getElementById("captcha-input").value = "";
     }
 
+    function updateModelTypeUI() {
+      const modelType = document.getElementById("model-type").value;
+      const heroGuide1 = document.getElementById("hero-guide-1");
+      const heroGuide2 = document.getElementById("hero-guide-2");
+      const formHint = document.getElementById("form-hint");
+      const submitHint = document.getElementById("submit-hint");
+      const submitButton = document.querySelector('#upload-form button[type="submit"]');
+      const zipHelpText = document.getElementById("zip-help-text");
+      const teachableFields = document.getElementById("teachable-fields");
+      const yoloFields = document.getElementById("yolo-darknet-fields");
+
+      if (modelType === "yolo_darknet") {
+        submitHint.textContent = "已選擇 YOLO Darknet，可繼續填寫資料並開始轉換";
+        submitButton.disabled = false;
+        heroGuide1.innerHTML = '1. 請準備 YOLO Darknet 模型檔，至少需要 <code>.cfg</code> 與 <code>.weights</code>；<code>classes.txt</code> 可選。';
+        heroGuide2.innerHTML = '2. 系統會嘗試將 YOLO Darknet 模型轉為 <code>yolov4_tiny.nb</code>。這是第一版 beta 流程。';
+        formHint.textContent = "YOLO Darknet 第一版 beta：目前使用 .cfg / .weights 與校正圖片進行轉換，classes.txt 為選填。";
+        teachableFields.style.display = "none";
+        yoloFields.style.display = "block";
+      } else if (modelType === "teachable") {
+        submitHint.textContent = "已選擇 Teachable Machine，可繼續填寫資料並開始轉換";
+        submitButton.disabled = false;
+        heroGuide1.innerHTML = '1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。';
+        heroGuide2.innerHTML = '2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。';
+        formHint.textContent = "目前要求填 email、模型 zip 與至少一張校正圖片。轉換完成後的 email 通知流程先保留欄位，寄信設定下一步再接。";
+        zipHelpText.innerHTML = '請選取 <code>converted_keras.zip</code>';
+        teachableFields.style.display = "block";
+        yoloFields.style.display = "none";
+      } else {
+        submitHint.textContent = "請先選擇模型類型";
+        submitButton.disabled = true;
+        heroGuide1.innerHTML = '1. 請先選擇模型類型。';
+        heroGuide2.innerHTML = '2. 選擇後系統會顯示對應的上傳欄位與轉換說明。';
+        formHint.textContent = "請先選擇模型類型，再進行檔案上傳。";
+        teachableFields.style.display = "none";
+        yoloFields.style.display = "none";
+      }
+    }
+
     function resetUploadForm() {
+      document.getElementById("model-type").value = "";
       document.getElementById("email").value = "";
       document.getElementById("zip-file").value = "";
+      document.getElementById("yolo-cfg-file").value = "";
+      document.getElementById("yolo-weights-file").value = "";
+      document.getElementById("yolo-classes-file").value = "";
       document.getElementById("calibration-files").value = "";
       document.getElementById("captcha-input").value = "";
       document.getElementById("zip-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-cfg-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-weights-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-classes-file-name").textContent = "尚未選擇檔案";
       document.getElementById("calibration-file-name").textContent = "尚未選擇檔案";
       document.getElementById("selected-zip-text").textContent = "";
       document.getElementById("selected-zip-file").style.display = "none";
       const preview = document.getElementById("calibration-preview");
       preview.innerHTML = "";
       preview.style.display = "none";
+      updateModelTypeUI();
     }
 
     document.getElementById("refresh-jobs").addEventListener("click", refreshJobs);
+    document.getElementById("model-type").addEventListener("change", updateModelTypeUI);
     document.getElementById("upload-form").addEventListener("submit", async (event) => {
       event.preventDefault();
+      const modelTypeInput = document.getElementById("model-type");
       const fileInput = document.getElementById("zip-file");
+      const yoloCfgInput = document.getElementById("yolo-cfg-file");
+      const yoloWeightsInput = document.getElementById("yolo-weights-file");
+      const yoloClassesInput = document.getElementById("yolo-classes-file");
       const calibrationInput = document.getElementById("calibration-files");
       const emailInput = document.getElementById("email");
       const captchaInput = document.getElementById("captcha-input");
-      if (!fileInput.files.length || !calibrationInput.files.length || !emailInput.value.trim() || !captchaInput.value.trim()) {
+      if (!modelTypeInput.value) {
+        showFormMessage("請先選擇模型類型。");
+        modelTypeInput.focus();
+        return;
+      }
+      const isTeachable = modelTypeInput.value === "teachable";
+      const modelReady = isTeachable
+        ? fileInput.files.length
+        : (yoloCfgInput.files.length && yoloWeightsInput.files.length);
+      if (!modelReady || !calibrationInput.files.length || !emailInput.value.trim() || !captchaInput.value.trim()) {
         if (!emailInput.value.trim()) {
           showFormMessage("請先輸入通知 email。");
           emailInput.focus();
           return;
         }
-        if (!fileInput.files.length) {
+        if (!modelReady && isTeachable) {
           showFormMessage("請先選擇模型壓縮檔 converted_keras.zip。");
           fileInput.click();
+          return;
+        }
+        if (!modelReady && !isTeachable) {
+          showFormMessage("請先提供 YOLO Darknet 的 .cfg 與 .weights。");
+          yoloCfgInput.click();
           return;
         }
         if (!calibrationInput.files.length) {
@@ -1184,10 +1361,19 @@ def html_page() -> str:
       }
       showFormMessage("上傳中...", "info");
       const formData = new FormData();
+      formData.append("model_type", modelTypeInput.value);
       formData.append("email", emailInput.value.trim());
       formData.append("captcha_id", currentCaptchaId || "");
       formData.append("captcha_input", captchaInput.value.trim());
-      formData.append("file", fileInput.files[0]);
+      if (isTeachable) {
+        formData.append("file", fileInput.files[0]);
+      } else {
+        formData.append("yolo_cfg_file", yoloCfgInput.files[0]);
+        formData.append("yolo_weights_file", yoloWeightsInput.files[0]);
+        if (yoloClassesInput.files.length) {
+          formData.append("yolo_classes_file", yoloClassesInput.files[0]);
+        }
+      }
       for (const item of calibrationInput.files) {
         formData.append("calibration_files", item);
       }
@@ -1217,6 +1403,24 @@ def html_page() -> str:
         selectedText.textContent = "";
         selectedBox.style.display = "none";
       }
+    });
+
+    document.getElementById("yolo-cfg-file").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      document.getElementById("yolo-cfg-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      clearFormMessage();
+    });
+
+    document.getElementById("yolo-weights-file").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      document.getElementById("yolo-weights-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      clearFormMessage();
+    });
+
+    document.getElementById("yolo-classes-file").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      document.getElementById("yolo-classes-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      clearFormMessage();
     });
 
     document.getElementById("calibration-files").addEventListener("change", (event) => {
@@ -1256,6 +1460,7 @@ def html_page() -> str:
 
     refreshCaptcha();
     refreshJobs();
+    updateModelTypeUI();
     setInterval(refreshJobs, 4000);
   </script>
 </body>
@@ -1314,24 +1519,44 @@ async def get_apple_touch_icon() -> FileResponse:
 
 @app.post("/api/jobs")
 async def create_job(
+    model_type: str = Form(...),
     email: str = Form(...),
     captcha_id: str = Form(...),
     captcha_input: str = Form(...),
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(None),
+    yolo_cfg_file: UploadFile | None = File(None),
+    yolo_weights_file: UploadFile | None = File(None),
+    yolo_classes_file: UploadFile | None = File(None),
     calibration_files: list[UploadFile] = File(...),
 ) -> JSONResponse:
+    model_type = model_type.strip()
+    if model_type not in {"teachable", "yolo_darknet"}:
+        raise HTTPException(status_code=400, detail="不支援的模型類型")
     email = email.strip()
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="請輸入有效 email")
     expected_code = app.state.captcha_store.pop(captcha_id, None)
     if not expected_code or captcha_input.strip() != expected_code:
         raise HTTPException(status_code=400, detail="數字驗證碼錯誤，請重新輸入")
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="缺少檔名")
-    if not file.filename.lower().endswith(".zip"):
-        raise HTTPException(status_code=400, detail="目前只接受 .zip 檔")
     if not calibration_files:
         raise HTTPException(status_code=400, detail="至少需要一張校正圖片")
+
+    if model_type == "teachable":
+        if not file or not file.filename:
+            raise HTTPException(status_code=400, detail="缺少檔名")
+        if not file.filename.lower().endswith(".zip"):
+            raise HTTPException(status_code=400, detail="目前只接受 .zip 檔")
+    else:
+        if not yolo_cfg_file or not yolo_cfg_file.filename:
+            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .cfg 檔")
+        if not yolo_weights_file or not yolo_weights_file.filename:
+            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .weights 檔")
+        if not yolo_cfg_file.filename.lower().endswith(".cfg"):
+            raise HTTPException(status_code=400, detail="YOLO 設定檔必須是 .cfg")
+        if not yolo_weights_file.filename.lower().endswith(".weights"):
+            raise HTTPException(status_code=400, detail="YOLO 權重檔必須是 .weights")
+        if yolo_classes_file and yolo_classes_file.filename and not yolo_classes_file.filename.lower().endswith(".txt"):
+            raise HTTPException(status_code=400, detail="YOLO 類別名稱檔必須是 .txt")
 
     job_id = uuid.uuid4().hex[:12]
     job_dir = JOB_ROOT / job_id
@@ -1344,10 +1569,25 @@ async def create_job(
 
     zip_path = input_dir / "converted_keras.zip"
     log_path = job_dir / "job.log"
-    output_path = public_output_path(work_dir)
+    output_path = public_output_path_for_model(work_dir, model_type)
 
-    with zip_path.open("wb") as target:
-        shutil.copyfileobj(file.file, target)
+    saved_filename = ""
+    if model_type == "teachable":
+        with zip_path.open("wb") as target:
+            shutil.copyfileobj(file.file, target)
+        saved_filename = file.filename or "converted_keras.zip"
+    else:
+        cfg_path = input_dir / "model.cfg"
+        weights_path = input_dir / "model.weights"
+        classes_path = input_dir / "classes.txt"
+        with cfg_path.open("wb") as target:
+            shutil.copyfileobj(yolo_cfg_file.file, target)
+        with weights_path.open("wb") as target:
+            shutil.copyfileobj(yolo_weights_file.file, target)
+        if yolo_classes_file and yolo_classes_file.filename:
+            with classes_path.open("wb") as target:
+                shutil.copyfileobj(yolo_classes_file.file, target)
+        saved_filename = f"{yolo_cfg_file.filename} + {yolo_weights_file.filename}"
 
     saved_count = 0
     for index, image in enumerate(calibration_files, start=1):
@@ -1364,9 +1604,10 @@ async def create_job(
 
     record = JobRecord(
         job_id=job_id,
-        filename=file.filename,
+        filename=saved_filename,
         email=email,
         created_at=now_text(),
+        model_type=model_type,
         log_path=str(log_path),
         output_path=str(output_path) if output_path.exists() else None,
         work_dir=str(work_dir),
@@ -1400,12 +1641,16 @@ async def get_job_log(job_id: str) -> HTMLResponse:
 @app.get("/api/jobs/{job_id}/download")
 async def download_output(job_id: str) -> FileResponse:
     job = app.state.jobs.get(job_id)
-    fallback_output = JOB_ROOT / job_id / "work" / "out_nbg_unify" / PUBLIC_OUTPUT_NB_FILENAME
+    if job:
+        output_name = public_output_filename_for_model(job.model_type)
+    else:
+        output_name = PUBLIC_OUTPUT_NB_FILENAME
+    fallback_output = JOB_ROOT / job_id / "work" / "out_nbg_unify" / output_name
     if not job and fallback_output.exists():
         return FileResponse(
             fallback_output,
             media_type="application/octet-stream",
-            filename=PUBLIC_OUTPUT_NB_FILENAME,
+            filename=output_name,
         )
     if not job:
         raise HTTPException(status_code=404, detail="找不到工作")
@@ -1415,7 +1660,7 @@ async def download_output(job_id: str) -> FileResponse:
     return FileResponse(
         output_path,
         media_type="application/octet-stream",
-        filename=PUBLIC_OUTPUT_NB_FILENAME,
+        filename=output_name,
     )
 
 
