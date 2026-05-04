@@ -1169,7 +1169,7 @@ def html_page() -> str:
       </div>
       <div class="example-links">
         <a class="example-card" href="/api/examples/ameba-imgclassification-final">
-          <strong>AMB82 Image Classification Arduino 範例</strong>
+          <strong>8735(AMB82) Image Classification Arduino 範例</strong>
           <span>下載可直接參考的 Arduino 專案壓縮檔，包含 <code>.ino</code>、類別表與模型放置結構。</span>
           <span style="margin-top:10px;">建議用途：將你轉換完成的 <code>imgclassification.nb</code> 放入 SD 卡的 <code>NN_MDL/imgclassification.nb</code> 後進行測試。</span>
         </a>
