@@ -1287,28 +1287,20 @@ def html_page() -> str:
 
     let currentCaptchaId = null;
 
-    async function refreshCaptcha(retries = 3) {
-      for (let attempt = 1; attempt <= retries; attempt += 1) {
-        try {
-          const response = await fetch(`/api/captcha?_=${Date.now()}`, { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error("captcha_failed");
-          }
-          const data = await response.json();
-          currentCaptchaId = data.captcha_id;
-          document.getElementById("captcha-code").textContent = data.captcha_code;
-          document.getElementById("captcha-input").value = "";
-          clearFormMessage();
-          return;
-        } catch (error) {
-          if (attempt < retries) {
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            continue;
-          }
-          currentCaptchaId = null;
-          document.getElementById("captcha-code").textContent = "----";
-          showFormMessage("驗證碼載入失敗，請稍後再試或重新整理頁面。");
+    async function refreshCaptcha() {
+      try {
+        const response = await fetch("/api/captcha");
+        if (!response.ok) {
+          throw new Error("captcha_failed");
         }
+        const data = await response.json();
+        currentCaptchaId = data.captcha_id;
+        document.getElementById("captcha-code").textContent = data.captcha_code;
+        document.getElementById("captcha-input").value = "";
+      } catch (error) {
+        currentCaptchaId = null;
+        document.getElementById("captcha-code").textContent = "----";
+        showFormMessage("驗證碼載入失敗，請重新整理頁面再試。");
       }
     }
 
