@@ -1288,20 +1288,11 @@ def html_page() -> str:
     let currentCaptchaId = null;
 
     async function refreshCaptcha() {
-      try {
-        const response = await fetch("/api/captcha");
-        if (!response.ok) {
-          throw new Error("captcha_failed");
-        }
-        const data = await response.json();
-        currentCaptchaId = data.captcha_id;
-        document.getElementById("captcha-code").textContent = data.captcha_code;
-        document.getElementById("captcha-input").value = "";
-      } catch (error) {
-        currentCaptchaId = null;
-        document.getElementById("captcha-code").textContent = "----";
-        showFormMessage("驗證碼載入失敗，請重新整理頁面再試。");
-      }
+      const response = await fetch("/api/captcha");
+      const data = await response.json();
+      currentCaptchaId = data.captcha_id;
+      document.getElementById("captcha-code").textContent = data.captcha_code;
+      document.getElementById("captcha-input").value = "";
     }
 
     function updateModelTypeUI() {
@@ -1432,22 +1423,17 @@ def html_page() -> str:
       for (const item of calibrationInput.files) {
         formData.append("calibration_files", item);
       }
-      try {
-        const response = await fetch("/api/jobs", { method: "POST", body: formData });
-        const data = await response.json();
-        if (!response.ok) {
-          showFormMessage(data.detail || "建立工作失敗");
-          await refreshCaptcha();
-          return;
-        }
-        showFormMessage(`工作已建立：${data.job_id}`, "info");
-        resetUploadForm();
+      const response = await fetch("/api/jobs", { method: "POST", body: formData });
+      const data = await response.json();
+      if (!response.ok) {
+        showFormMessage(data.detail || "建立工作失敗");
         await refreshCaptcha();
-        await refreshJobs();
-      } catch (error) {
-        showFormMessage("上傳失敗或連線中斷，請再試一次。");
-        await refreshCaptcha();
+        return;
       }
+      showFormMessage(`工作已建立：${data.job_id}`, "info");
+      resetUploadForm();
+      await refreshCaptcha();
+      await refreshJobs();
     });
 
     document.getElementById("zip-file").addEventListener("change", (event) => {
