@@ -52,6 +52,7 @@ ACUITY_OUTPUT_NB_FILENAME = "network_binary.nb"
 PUBLIC_OUTPUT_NB_FILENAME = "imgclassification.nb"
 YOLO_PUBLIC_OUTPUT_NB_FILENAME = "yolov4_tiny.nb"
 SITE_ASSET_DIR = BASE_DIR / "site_assets"
+EXAMPLE_DOWNLOAD_DIR = BASE_DIR / "example_downloads"
 FAVICON_PATHS = {
     "ico": SITE_ASSET_DIR / "favicon.ico",
     "16": SITE_ASSET_DIR / "favicon-16x16.png",
@@ -62,6 +63,9 @@ SERVICE_ICON_PATHS = {
     "mqttgo": BASE_DIR / "service_icons" / "mqttgo_thumb.png",
     "mqttgovip": BASE_DIR / "service_icons" / "mqttgovip_thumb.png",
     "nmking": BASE_DIR / "service_icons" / "nmking.jpg",
+}
+EXAMPLE_DOWNLOAD_PATHS = {
+    "ameba-imgclassification-final": EXAMPLE_DOWNLOAD_DIR / "ameba_imgclassification_final.zip",
 }
 
 
@@ -945,6 +949,35 @@ def html_page() -> str:
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
     }
+    .example-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .example-card {
+      display: block;
+      border: 1px solid #d1d5db;
+      background: #fafafa;
+      padding: 18px;
+      color: inherit;
+      text-decoration: none;
+    }
+    .example-card:hover {
+      background: #f3f4f6;
+      text-decoration: none;
+    }
+    .example-card strong {
+      display: block;
+      font-size: 16px;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .example-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
     .service-link {
       position: relative;
       display: block;
@@ -1006,6 +1039,7 @@ def html_page() -> str:
     @media (max-width: 880px) {
       .grid { grid-template-columns: 1fr; }
       .meta { grid-template-columns: 1fr; }
+      .example-links { grid-template-columns: 1fr; }
       .service-links { grid-template-columns: 1fr; }
       #header > div { padding: 0 14px; }
       .brand { font-size: 20px; }
@@ -1128,6 +1162,18 @@ def html_page() -> str:
           <button id="refresh-jobs" class="secondary" type="button">重新整理工作列表</button>
         </div>
       </section>
+    </section>
+    <section class="card">
+      <div class="section-title">
+        <h2>範例下載</h2>
+      </div>
+      <div class="example-links">
+        <a class="example-card" href="/api/examples/ameba-imgclassification-final">
+          <strong>AMB82 Image Classification Arduino 範例</strong>
+          <span>下載可直接參考的 Arduino 專案壓縮檔，包含 <code>.ino</code>、類別表與模型放置結構。</span>
+          <span style="margin-top:10px;">建議用途：將你轉換完成的 <code>imgclassification.nb</code> 放入 SD 卡的 <code>NN_MDL/imgclassification.nb</code> 後進行測試。</span>
+        </a>
+      </div>
     </section>
     <section class="card">
       <div class="section-title">
@@ -1495,6 +1541,18 @@ async def get_service_icon(icon_name: str) -> FileResponse:
     if not path or not path.exists():
         raise HTTPException(status_code=404, detail="找不到圖示")
     return FileResponse(path)
+
+
+@app.get("/api/examples/{example_name}")
+async def download_example(example_name: str) -> FileResponse:
+    path = EXAMPLE_DOWNLOAD_PATHS.get(example_name)
+    if not path or not path.exists():
+        raise HTTPException(status_code=404, detail="找不到範例檔案")
+    return FileResponse(
+        path,
+        media_type="application/zip",
+        filename=path.name,
+    )
 
 
 @app.get("/favicon.ico")
