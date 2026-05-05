@@ -1138,7 +1138,7 @@ def html_page() -> str:
       <div class="service-links">
         <a class="service-link" href="/api/examples/arduino-imgclassification">
           <div class="service-icon twgo">A</div>
-          <strong>8735(AMB82) Image Classification Arduino 範例</strong>
+          <strong>RTSPImageClassification Arduino 範例</strong>
           <span>下載 Arduino 範例後，請將轉換完成的模型放到 <code>NN_MDL/imgclassification.nb</code> 後再測試。</span>
         </a>
       </div>
