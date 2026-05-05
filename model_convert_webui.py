@@ -201,14 +201,14 @@ def build_received_mail_subject(job: JobRecord) -> str:
 def build_received_mail_text_body(job: JobRecord) -> str:
     model_label = "Teachable Machine" if job.model_type == "teachable" else "YOLO Darknet"
     return (
-        "?典末嚗n\n"
-        "?歇?嗅?函?璅∪?頧?撌乩?嚗頂蝯勗?靘??????n\n"
-        f"撌乩?蝺刻?嚗job.job_id}\n"
-        f"璅∪?憿?嚗model_label}\n"
-        f"銝瑼?嚗job.filename}\n"
-        f"?嗅??嚗job.created_at}\n"
-        f"?⊥迤??嚗job.calibration_count} 撘琵n\n"
-        "?桀?撌乩?撌脣遣蝡?隢???????嚗??????????頛???n"
+        "您好，\n\n"
+        "您的模型轉換工作已收到，系統會開始排隊處理。\n\n"
+        f"工作編號：{job.job_id}\n"
+        f"模型類型：{model_label}\n"
+        f"上傳檔案：{job.filename}\n"
+        f"建立時間：{job.created_at}\n"
+        f"校正圖片：{job.calibration_count} 張\n\n"
+        "轉換完成後，系統會再寄送下載通知。\n"
     )
 
 
@@ -219,15 +219,15 @@ def build_received_mail_html_body(job: JobRecord) -> str:
 <html lang="zh-Hant">
 <body style="margin:0;padding:24px;background:#f6f6f6;font-family:Segoe UI,Microsoft JhengHei,sans-serif;color:#2b2b2b;">
   <div style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #d7d7d7;">
-    <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">NMKING撠?祕撽恕</div>
+    <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">NMKING小霸王實驗室</div>
     <div style="padding:24px 22px;">
-      <h2 style="margin:0 0 14px;font-size:26px;">撌脫?唳?芋???極雿?/h2>
-      <p style="margin:0 0 10px;">撌乩?蝺刻?嚗job.job_id}</p>
-      <p style="margin:0 0 10px;">璅∪?憿?嚗model_label}</p>
-      <p style="margin:0 0 10px;">銝瑼?嚗job.filename}</p>
-      <p style="margin:0 0 10px;">?嗅??嚗job.created_at}</p>
-      <p style="margin:0 0 18px;">?⊥迤??嚗job.calibration_count} 撘?/p>
-      <p style="margin:0 0 18px;">?桀?撌乩?撌脣遣蝡?隢???????嚗??????????頛????/p>
+      <h2 style="margin:0 0 14px;font-size:26px;">模型轉換工作已收到</h2>
+      <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
+      <p style="margin:0 0 10px;">模型類型：{model_label}</p>
+      <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
+      <p style="margin:0 0 10px;">建立時間：{job.created_at}</p>
+      <p style="margin:0 0 18px;">校正圖片：{job.calibration_count} 張</p>
+      <p style="margin:0 0 18px;">轉換完成後，系統會再寄送下載通知。</p>
     </div>
   </div>
 </body>
