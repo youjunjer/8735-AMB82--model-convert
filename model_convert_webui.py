@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import queue
@@ -90,7 +90,7 @@ class JobRecord:
     created_at: str
     model_type: str = "teachable"
     status: str = "queued"
-    message: str = "等待開始"
+    message: str = "蝑???"
     started_at: str | None = None
     finished_at: str | None = None
     return_code: int | None = None
@@ -195,20 +195,20 @@ def public_output_filename_for_model(model_type: str) -> str:
 
 
 def build_received_mail_subject(job: JobRecord) -> str:
-    return f"[MQTTGO] 已收到模型轉換工作 - {job.job_id}"
+    return f"[MQTTGO] 撌脫?唳芋???極雿?- {job.job_id}"
 
 
 def build_received_mail_text_body(job: JobRecord) -> str:
     model_label = "Teachable Machine" if job.model_type == "teachable" else "YOLO Darknet"
     return (
-        "您好，\n\n"
-        "我們已收到您的模型轉換工作，系統將依序排隊處理。\n\n"
-        f"工作編號：{job.job_id}\n"
-        f"模型類型：{model_label}\n"
-        f"上傳檔案：{job.filename}\n"
-        f"收到時間：{job.created_at}\n"
-        f"校正圖片：{job.calibration_count} 張\n\n"
-        "目前工作已建立，請等候轉換完成後，我們會再寄送結果通知與下載連結。\n"
+        "?典末嚗n\n"
+        "?歇?嗅?函?璅∪?頧?撌乩?嚗頂蝯勗?靘??????n\n"
+        f"撌乩?蝺刻?嚗job.job_id}\n"
+        f"璅∪?憿?嚗model_label}\n"
+        f"銝瑼?嚗job.filename}\n"
+        f"?嗅??嚗job.created_at}\n"
+        f"?⊥迤??嚗job.calibration_count} 撘琵n\n"
+        "?桀?撌乩?撌脣遣蝡?隢???????嚗??????????頛???n"
     )
 
 
@@ -219,15 +219,15 @@ def build_received_mail_html_body(job: JobRecord) -> str:
 <html lang="zh-Hant">
 <body style="margin:0;padding:24px;background:#f6f6f6;font-family:Segoe UI,Microsoft JhengHei,sans-serif;color:#2b2b2b;">
   <div style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #d7d7d7;">
-    <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">NMKING小霸王實驗室</div>
+    <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">NMKING撠?祕撽恕</div>
     <div style="padding:24px 22px;">
-      <h2 style="margin:0 0 14px;font-size:26px;">已收到您的模型轉換工作。</h2>
-      <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
-      <p style="margin:0 0 10px;">模型類型：{model_label}</p>
-      <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
-      <p style="margin:0 0 10px;">收到時間：{job.created_at}</p>
-      <p style="margin:0 0 18px;">校正圖片：{job.calibration_count} 張</p>
-      <p style="margin:0 0 18px;">目前工作已建立，請等候轉換完成後，我們會再寄送結果通知與下載連結。</p>
+      <h2 style="margin:0 0 14px;font-size:26px;">撌脫?唳?芋???極雿?/h2>
+      <p style="margin:0 0 10px;">撌乩?蝺刻?嚗job.job_id}</p>
+      <p style="margin:0 0 10px;">璅∪?憿?嚗model_label}</p>
+      <p style="margin:0 0 10px;">銝瑼?嚗job.filename}</p>
+      <p style="margin:0 0 10px;">?嗅??嚗job.created_at}</p>
+      <p style="margin:0 0 18px;">?⊥迤??嚗job.calibration_count} 撘?/p>
+      <p style="margin:0 0 18px;">?桀?撌乩?撌脣遣蝡?隢???????嚗??????????頛????/p>
     </div>
   </div>
 </body>
@@ -236,38 +236,38 @@ def build_received_mail_html_body(job: JobRecord) -> str:
 
 
 def build_mail_subject(job: JobRecord) -> str:
-    return f"[MQTTGO] 模型轉換{'完成' if job.status == 'completed' else '失敗'} - {job.job_id}"
+    return f"[MQTTGO] 璅∪?頧?{'摰?' if job.status == 'completed' else '憭望?'} - {job.job_id}"
 
 
 def build_mail_text_body(job: JobRecord) -> str:
     links = (
-        "\n其他服務：\n"
-        "mqttgo.io：https://mqttgo.io\n"
-        "mqttgo.vip：https://mqttgo.vip\n"
-        "nmking.io：https://www.nmking.io\n"
-        "twgo.io：https://twgo.io\n"
+        "\n?嗡???嚗n"
+        "mqttgo.io嚗ttps://mqttgo.io\n"
+        "mqttgo.vip嚗ttps://mqttgo.vip\n"
+        "nmking.io嚗ttps://www.nmking.io\n"
+        "twgo.io嚗ttps://twgo.io\n"
     )
     if job.status == "completed":
         output_name = public_output_filename_for_model(job.model_type)
         return (
-            "您好，\n\n"
-            "您的模型轉換已完成。\n\n"
-            f"工作編號：{job.job_id}\n"
-            f"上傳檔案：{job.filename}\n"
-            f"完成時間：{job.finished_at}\n"
-            f"耗時：約 {job.elapsed_seconds} 秒\n"
-            f"下載連結：{build_download_url(job.job_id)}\n\n"
-            f"請使用上方連結下載 {output_name}。\n"
+            "?典末嚗n\n"
+            "?函?璅∪?頧?撌脣??n\n"
+            f"撌乩?蝺刻?嚗job.job_id}\n"
+            f"銝瑼?嚗job.filename}\n"
+            f"摰???嚗job.finished_at}\n"
+            f"??嚗? {job.elapsed_seconds} 蝘n"
+            f"銝????嚗build_download_url(job.job_id)}\n\n"
+            f"隢蝙?其??寥??銝? {output_name}?n"
             f"{links}"
         )
     return (
-        "您好，\n\n"
-        "您的模型轉換未能完成。\n\n"
-        f"工作編號：{job.job_id}\n"
-        f"上傳檔案：{job.filename}\n"
-        f"失敗時間：{job.finished_at}\n"
-        "系統狀態：轉換失敗，請查看系統記錄。\n\n"
-        "請稍後重新上傳，或聯繫管理員協助查看後端記錄。\n"
+        "?典末嚗n\n"
+        "?函?璅∪?頧??芾摰??n\n"
+        f"撌乩?蝺刻?嚗job.job_id}\n"
+        f"銝瑼?嚗job.filename}\n"
+        f"憭望???嚗job.finished_at}\n"
+        "蝟餌絞???頧?憭望?嚗??亦?蝟餌絞閮??n\n"
+        "隢?敺??唬??喉??蝜怎恣???亦?敺垢閮??n"
         f"{links}"
     )
 
@@ -276,20 +276,20 @@ def build_mail_html_body(job: JobRecord) -> str:
     output_name = public_output_filename_for_model(job.model_type)
     status_line = (
         f"""
-        <p style="margin:0 0 10px;">下載連結：
+        <p style="margin:0 0 10px;">銝????嚗?
           <a href="{build_download_url(job.job_id)}" style="color:#2563eb;">{build_download_url(job.job_id)}</a>
         </p>
-        <p style="margin:0 0 18px;">請使用上方連結下載 <code>{output_name}</code>。</p>
+        <p style="margin:0 0 18px;">隢蝙?其??寥??銝? <code>{output_name}</code>??/p>
         """
         if job.status == "completed"
         else """
-        <p style="margin:0 0 18px;">系統狀態：轉換失敗，請查看系統記錄。</p>
-        <p style="margin:0 0 18px;">請稍後重新上傳，或聯繫管理員協助查看後端記錄。</p>
+        <p style="margin:0 0 18px;">蝟餌絞???頧?憭望?嚗??亦?蝟餌絞閮???/p>
+        <p style="margin:0 0 18px;">隢?敺??唬??喉??蝜怎恣???亦?敺垢閮???/p>
         """
     )
-    title = "您的模型轉換已完成。" if job.status == "completed" else "您的模型轉換未能完成。"
-    time_label = "完成時間" if job.status == "completed" else "失敗時間"
-    elapsed_html = f'<p style="margin:0 0 10px;">耗時：約 {job.elapsed_seconds} 秒</p>' if job.status == "completed" else ""
+    title = "?函?璅∪?頧?撌脣??? if job.status == "completed" else "?函?璅∪?頧??芾摰???
+    time_label = "摰???" if job.status == "completed" else "憭望???"
+    elapsed_html = f'<p style="margin:0 0 10px;">??嚗? {job.elapsed_seconds} 蝘?/p>' if job.status == "completed" else ""
     return f"""\
 <!doctype html>
 <html lang="zh-Hant">
@@ -298,13 +298,13 @@ def build_mail_html_body(job: JobRecord) -> str:
     <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">MQTTGO</div>
     <div style="padding:24px 22px;">
       <h2 style="margin:0 0 14px;font-size:26px;">{title}</h2>
-      <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
-      <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
-      <p style="margin:0 0 10px;">{time_label}：{job.finished_at}</p>
+      <p style="margin:0 0 10px;">撌乩?蝺刻?嚗job.job_id}</p>
+      <p style="margin:0 0 10px;">銝瑼?嚗job.filename}</p>
+      <p style="margin:0 0 10px;">{time_label}嚗job.finished_at}</p>
       {elapsed_html}
       {status_line}
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid #e5e7eb;">
-        <p style="margin:0 0 14px;font-weight:700;">其他服務</p>
+        <p style="margin:0 0 14px;font-weight:700;">?嗡???</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
           <tr>
             <td style="padding:6px;">
@@ -313,7 +313,7 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:mqttgo_icon" alt="mqttgo.io" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.io</div>
-                <div style="font-size:12px;color:#6b7280;">免費匿名的 mqtt 服務</div>
+                <div style="font-size:12px;color:#6b7280;">?祥?踹???mqtt ??</div>
               </a>
             </td>
             <td style="padding:6px;">
@@ -322,7 +322,7 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:mqttgovip_icon" alt="mqttgo.vip" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.vip</div>
-                <div style="font-size:12px;color:#6b7280;">專業的 mqtt 服務</div>
+                <div style="font-size:12px;color:#6b7280;">撠平??mqtt ??</div>
               </a>
             </td>
           </tr>
@@ -333,14 +333,14 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:nmking_icon" alt="nmking.io" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">nmking.io</div>
-                <div style="font-size:12px;color:#6b7280;">教學網站</div>
+                <div style="font-size:12px;color:#6b7280;">?飛蝬脩?</div>
               </a>
             </td>
             <td style="padding:6px;">
               <a href="https://twgo.io" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
                 <div style="width:56px;height:56px;border-radius:999px;background:#E62457;color:#ffffff;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 0 10px 0;font-size:20px;">T</div>
                 <div style="font-weight:700;margin-bottom:4px;">twgo.io</div>
-                <div style="font-size:12px;color:#6b7280;">簡單免費轉址服務</div>
+                <div style="font-size:12px;color:#6b7280;">蝪∪?祥頧???</div>
               </a>
             </td>
           </tr>
@@ -375,7 +375,7 @@ def send_email_message(subject: str, to_email: str, text_body: str, html_body: s
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = formataddr(("NMKING小霸王實驗室", settings.from_email))
+    message["From"] = formataddr(("NMKING撠?祕撽恕", settings.from_email))
     message["To"] = to_email
     message.set_content(text_body, charset="utf-8")
     message.add_alternative(html_body, subtype="html", charset="utf-8")
@@ -484,7 +484,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
     started = datetime.now()
     with job.lock:
         job.status = "running"
-        job.message = "WSL 轉換中" if job.model_type == "teachable" else "YOLO Darknet 流程檢查中"
+        job.message = "WSL 頧?銝? if job.model_type == "teachable" else "YOLO Darknet 瘚?瑼Ｘ銝?
         job.started_at = now_text()
         job.queue_position = None
 
@@ -511,7 +511,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
             if generated_output_path != output_path:
                 shutil.copyfile(generated_output_path, output_path)
             job.status = "completed"
-            job.message = "轉換完成"
+            job.message = "頧?摰?"
             job.output_path = str(output_path)
             job.notification_status = "ready_to_notify_success"
             increment_total_completed_count()
@@ -519,17 +519,17 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
             yolo_output_path = public_output_path_for_model(work_dir, job.model_type)
             if yolo_output_path.exists():
                 job.status = "completed"
-                job.message = "轉換完成"
+                job.message = "頧?摰?"
                 job.output_path = str(yolo_output_path)
                 job.notification_status = "ready_to_notify_success"
                 increment_total_completed_count()
             else:
                 job.status = "failed"
-                job.message = "YOLO Darknet 轉換失敗，請查看 log"
+                job.message = "YOLO Darknet 頧?憭望?嚗??亦? log"
                 job.notification_status = "ready_to_notify_failed"
         else:
             job.status = "failed"
-            job.message = "轉換失敗，請查看 log"
+            job.message = "頧?憭望?嚗??亦? log"
             job.notification_status = "ready_to_notify_failed"
 
     try:
@@ -544,7 +544,7 @@ def refresh_queue_positions() -> None:
         if job.status == "queued":
             try:
                 job.queue_position = pending_ids.index(job.job_id) + 1
-                job.message = f"排隊中，第 {job.queue_position} 位"
+                job.message = f"??銝哨?蝚?{job.queue_position} 雿?
             except ValueError:
                 job.queue_position = None
 
@@ -556,7 +556,7 @@ def service_summary() -> dict[str, object]:
     completed = [job for job in jobs if job.status == "completed"]
     failed = [job for job in jobs if job.status == "failed"]
     return {
-        "status_label": "轉換中" if running else "閒置",
+        "status_label": "頧?銝? if running else "?蔭",
         "queue_count": len(queued),
         "queue_job_ids": [job.job_id for job in queued],
         "running_count": len(running),
@@ -601,7 +601,7 @@ def html_page() -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>8735(AMB82) Teachable Machine 模型轉換</title>
+  <title>8735(AMB82) Teachable Machine 璅∪?頧?</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -1027,114 +1027,126 @@ def html_page() -> str:
   </div>
   <main>
     <section class="card hero">
-      <h1>8735(AMB82) 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
-      <p>目前提供 <strong>Teachable Machine</strong> 與 <strong>YOLO Darknet</strong> 兩個模型類型選項。</p>
-      <p id="hero-guide-1">1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
-      <p id="hero-guide-2">2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。</p>
+      <h1>8735(AMB82) 璅∪?頧? <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
+      <p>?桀??? <strong>Teachable Machine</strong> ??<strong>YOLO Darknet</strong> ?拙芋?????/p>
+      <p id="hero-guide-1">1. 隢???<a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine蝬脩?</a> 撱箇?銝西?蝺渲撌梁?璅∪?嚗????臬璅∪?瑼?<code>converted_keras.zip</code>??/p>
+      <p id="hero-guide-2">2. 銝 <code>converted_keras.zip</code> ?撠?撘菜甇????嚗頂蝯勗?怨???蝔??Ｗ <code>imgclassification.nb</code> ??頛楝敺??儔?唳?摰? Mail??/p>
     </section>
     <section class="grid">
       <section class="card">
         <div class="section-title">
-          <h2>建立轉換工作</h2>
-          <span class="pill">單一 worker 排隊</span>
+          <h2>撱箇?頧?撌乩?</h2>
+          <span class="pill">?桐? worker ??</span>
         </div>
-        <p id="form-hint" class="hint">目前要求填 email、模型 zip 與至少一張校正圖片。轉換完成後的 email 通知流程先保留欄位，寄信設定下一步再接。</p>
+        <p id="form-hint" class="hint">?桀?閬?憛?email?芋??zip ?撠?撘菜甇??????????email ?瘚?????雿?撖縑閮剖?銝?甇亙??乓?/p>
         <form id="upload-form" style="margin-top:14px;" novalidate>
           <select id="model-type" name="model_type" required>
-            <option value="" selected>請選擇</option>
+            <option value="" selected>隢??/option>
             <option value="teachable">Teachable Machine</option>
             <option value="yolo_darknet">YOLO Darknet</option>
           </select>
-          <input id="email" type="email" name="email" placeholder="請輸入通知 email" required>
+          <input id="email" type="email" name="email" placeholder="隢撓?仿 email" required>
           <div id="teachable-fields">
             <label class="dropzone" for="zip-file">
-              <strong>模型壓縮檔</strong>
-              <span id="zip-help-text">請選取 <code>converted_keras.zip</code></span>
+              <strong>璅∪?憯葬瑼?/strong>
+              <span id="zip-help-text">隢??<code>converted_keras.zip</code></span>
               <input id="zip-file" type="file" name="file" accept=".zip" style="display:none;">
-              <span id="zip-file-name">尚未選擇檔案</span>
+              <span id="zip-file-name">撠?豢?瑼?</span>
               <div id="selected-zip-file" class="selected-file">
-                <strong>目前選擇的模型</strong>
+                <strong>?桀??豢??芋??/strong>
                 <code id="selected-zip-text"></code>
               </div>
             </label>
           </div>
           <div id="yolo-darknet-fields" style="display:none;">
             <label class="dropzone" for="yolo-cfg-file">
-              <strong>YOLO 設定檔</strong>
-              <span>請選取 <code>.cfg</code></span>
+              <strong>YOLO 閮剖?瑼?/strong>
+              <span>隢??<code>.cfg</code></span>
               <input id="yolo-cfg-file" type="file" name="yolo_cfg_file" accept=".cfg" style="display:none;">
-              <span id="yolo-cfg-file-name">尚未選擇檔案</span>
+              <span id="yolo-cfg-file-name">撠?豢?瑼?</span>
             </label>
             <label class="dropzone" for="yolo-weights-file">
-              <strong>YOLO 權重檔</strong>
-              <span>請選取 <code>.weights</code></span>
+              <strong>YOLO 甈?瑼?/strong>
+              <span>隢??<code>.weights</code></span>
               <input id="yolo-weights-file" type="file" name="yolo_weights_file" accept=".weights" style="display:none;">
-              <span id="yolo-weights-file-name">尚未選擇檔案</span>
+              <span id="yolo-weights-file-name">撠?豢?瑼?</span>
             </label>
             <label class="dropzone" for="yolo-classes-file">
-              <strong>YOLO 類別名稱</strong>
-              <span>可選，請選取 <code>classes.txt</code></span>
+              <strong>YOLO 憿?迂</strong>
+              <span>?舫嚗??詨? <code>classes.txt</code></span>
               <input id="yolo-classes-file" type="file" name="yolo_classes_file" accept=".txt" style="display:none;">
-              <span id="yolo-classes-file-name">尚未選擇檔案</span>
+              <span id="yolo-classes-file-name">撠?豢?瑼?</span>
             </label>
           </div>
           <label class="dropzone" for="calibration-files">
-            <strong>校正圖片</strong>
-            <span>至少 1 張，可多選 jpg / jpeg / png</span>
+            <strong>?⊥迤??</strong>
+            <span>?喳? 1 撘蛛??臬???jpg / jpeg / png</span>
             <input id="calibration-files" type="file" name="calibration_files" accept=".jpg,.jpeg,.png" multiple style="display:none;">
-            <span id="calibration-file-name">尚未選擇檔案</span>
+            <span id="calibration-file-name">撠?豢?瑼?</span>
           </label>
           <div id="calibration-preview" class="preview-grid" style="display:none;"></div>
           <div class="captcha-box">
             <div id="captcha-code" class="captcha-code">----</div>
-            <input id="captcha-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="請輸入數字驗證碼" required>
+            <input id="captcha-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="隢撓?交摮?霅Ⅳ" required>
           </div>
-          <button type="submit" disabled>開始轉換</button>
-          <div id="submit-hint" class="hint" style="margin-top:10px;">請先選擇模型類型</div>
+          <button type="submit" disabled>??頧?</button>
+          <div id="submit-hint" class="hint" style="margin-top:10px;">隢??豢?璅∪?憿?</div>
         </form>
         <div id="submit-result" class="form-message" style="margin-top:12px;"></div>
       </section>
       <section class="card">
         <div class="section-title">
-          <h2>服務狀態</h2>
-          <span class="pill">通知暫不寄送</span>
+          <h2>?????/h2>
+          <span class="pill">??思?撖?/span>
         </div>
         <div class="status-board" style="margin-top:14px;">
           <div id="service-status-main" class="status-main status-resting">
             <div>
-              <div class="status-note">目前伺服器狀態</div>
-              <strong id="service-status-label">閒置</strong>
+              <div class="status-note">?桀?隡箸??函???/div>
+              <strong id="service-status-label">?蔭</strong>
             </div>
-            <span class="pill" id="service-queue-pill">排隊 0 筆</span>
+            <span class="pill" id="service-queue-pill">?? 0 蝑?/span>
           </div>
           <div class="meta">
-            <div>WSL 發行版：<strong>AMB_Model</strong></div>
-            <div>處理模式：<strong>單一 worker 排隊</strong></div>
-            <div>目前轉換中：<strong id="service-running-count">0</strong> 筆</div>
-            <div>目前排隊中：<strong id="service-queue-count">0</strong> 筆</div>
-            <div>累計完成：<strong id="service-total-completed-count">0</strong> 筆</div>
+            <div>WSL ?潸???<strong>AMB_Model</strong></div>
+            <div>??璅∪?嚗?strong>?桐? worker ??</strong></div>
+            <div>?桀?頧?銝哨?<strong id="service-running-count">0</strong> 蝑?/div>
+            <div>?桀???銝哨?<strong id="service-queue-count">0</strong> 蝑?/div>
+            <div>蝝航?摰?嚗?strong id="service-total-completed-count">0</strong> 蝑?/div>
           </div>
           <div class="queue-list">
-            <strong>轉換中的工作編號</strong>
+            <strong>頧?銝剔?撌乩?蝺刻?</strong>
             <div id="service-running-job-ids" class="queue-job-ids">
-              <span class="queue-empty">目前沒有轉換中的工作</span>
+              <span class="queue-empty">?桀?瘝?頧?銝剔?撌乩?</span>
             </div>
           </div>
           <div class="queue-list">
-            <strong>排隊中的工作編號</strong>
+            <strong>??銝剔?撌乩?蝺刻?</strong>
             <div id="service-queue-job-ids" class="queue-job-ids">
-              <span class="queue-empty">目前沒有排隊工作</span>
+              <span class="queue-empty">?桀?瘝???撌乩?</span>
             </div>
           </div>
         </div>
         <div class="actions" style="margin-top:16px;">
-          <button id="refresh-jobs" class="secondary" type="button">重新整理工作列表</button>
+          <button id="refresh-jobs" class="secondary" type="button">??渡?撌乩??”</button>
         </div>
       </section>
     </section>
     <section class="card">
       <div class="section-title">
-        <h2>其他服務</h2>
+        <h2>蝭?銝?</h2>
+      </div>
+      <div class="service-links">
+        <a class="service-link" href="/api/examples/arduino-imgclassification">
+          <div class="service-icon twgo">A</div>
+          <strong>8735(AMB82) Image Classification Arduino 蝭?</strong>
+          <span>銝? Arduino 蝭?撠?嚗?璅∪??曉 <code>NN_MDL/imgclassification.nb</code> 敺?舀葫閰艾?/span>
+        </a>
+      </div>
+    </section>
+    <section class="card">
+      <div class="section-title">
+        <h2>?嗡???</h2>
       </div>
       <div class="service-links">
         <a class="service-link" href="https://mqttgo.io" target="_blank" rel="noreferrer">
@@ -1142,38 +1154,26 @@ def html_page() -> str:
             <img src="/api/service-icon/mqttgo" alt="mqttgo.io logo">
           </div>
           <strong>mqttgo.io</strong>
-          <span>免費匿名的 mqtt 服務</span>
+          <span>?祥?踹???mqtt ??</span>
         </a>
         <a class="service-link" href="https://mqttgo.vip" target="_blank" rel="noreferrer">
           <div class="service-icon">
             <img src="/api/service-icon/mqttgovip" alt="mqttgo.vip logo">
           </div>
           <strong>mqttgo.vip</strong>
-          <span>專業的 mqtt 服務</span>
+          <span>撠平??mqtt ??</span>
         </a>
         <a class="service-link" href="https://nmking.io" target="_blank" rel="noreferrer">
           <div class="service-icon">
             <img src="/api/service-icon/nmking" alt="nmking.io logo">
           </div>
           <strong>nmking.io</strong>
-          <span>教學網站</span>
+          <span>?飛蝬脩?</span>
         </a>
         <a class="service-link" href="https://twgo.io" target="_blank" rel="noreferrer">
           <div class="service-icon twgo">T</div>
           <strong>twgo.io</strong>
-          <span>簡單免費轉址服務</span>
-        </a>
-      </div>
-    </section>
-    <section class="card">
-      <div class="section-title">
-        <h2>範例下載</h2>
-      </div>
-      <div class="service-links">
-        <a class="service-link" href="/api/examples/arduino-imgclassification">
-          <div class="service-icon twgo">A</div>
-          <strong>8735(AMB82) Image Classification Arduino 範例</strong>
-          <span>下載 Arduino 範例專案，將模型放到 <code>NN_MDL/imgclassification.nb</code> 後即可測試。</span>
+          <span>蝪∪?祥頧???</span>
         </a>
       </div>
     </section>
@@ -1211,7 +1211,7 @@ def html_page() -> str:
       const queueJobIds = document.getElementById("service-queue-job-ids");
 
       label.textContent = summary.status_label;
-      queuePill.textContent = `排隊 ${summary.queue_count} 筆`;
+      queuePill.textContent = `?? ${summary.queue_count} 蝑;
       runningCount.textContent = summary.running_count;
       queueCount.textContent = summary.queue_count;
       totalCompletedCount.textContent = summary.total_completed_count;
@@ -1226,7 +1226,7 @@ def html_page() -> str:
       } else {
         const empty = document.createElement("span");
         empty.className = "queue-empty";
-        empty.textContent = "目前沒有轉換中的工作";
+        empty.textContent = "?桀?瘝?頧?銝剔?撌乩?";
         runningJobIds.appendChild(empty);
       }
       queueJobIds.innerHTML = "";
@@ -1240,12 +1240,12 @@ def html_page() -> str:
       } else {
         const empty = document.createElement("span");
         empty.className = "queue-empty";
-        empty.textContent = "目前沒有排隊工作";
+        empty.textContent = "?桀?瘝???撌乩?";
         queueJobIds.appendChild(empty);
       }
 
       main.classList.remove("status-resting", "status-busy");
-      main.classList.add(summary.status_label === "轉換中" ? "status-busy" : "status-resting");
+      main.classList.add(summary.status_label === "頧?銝? ? "status-busy" : "status-resting");
     }
 
     async function refreshJobs() {
@@ -1276,28 +1276,28 @@ def html_page() -> str:
       const yoloFields = document.getElementById("yolo-darknet-fields");
 
       if (modelType === "yolo_darknet") {
-        submitHint.textContent = "已選擇 YOLO Darknet，可繼續填寫資料並開始轉換";
+        submitHint.textContent = "撌脤??YOLO Darknet嚗蝜潛?憛怠神鞈?銝阡?憪???;
         submitButton.disabled = false;
-        heroGuide1.innerHTML = '1. 請準備 YOLO Darknet 模型檔，至少需要 <code>.cfg</code> 與 <code>.weights</code>；<code>classes.txt</code> 可選。';
-        heroGuide2.innerHTML = '2. 系統會嘗試將 YOLO Darknet 模型轉為 <code>yolov4_tiny.nb</code>。這是第一版 beta 流程。';
-        formHint.textContent = "YOLO Darknet 第一版 beta：目前使用 .cfg / .weights 與校正圖片進行轉換，classes.txt 為選填。";
+        heroGuide1.innerHTML = '1. 隢???YOLO Darknet 璅∪?瑼??喳??閬?<code>.cfg</code> ??<code>.weights</code>嚗?code>classes.txt</code> ?舫??;
+        heroGuide2.innerHTML = '2. 蝟餌絞??閰血? YOLO Darknet 璅∪?頧 <code>yolov4_tiny.nb</code>?蝚砌???beta 瘚???;
+        formHint.textContent = "YOLO Darknet 蝚砌???beta嚗?蝙??.cfg / .weights ?甇???脰?頧?嚗lasses.txt ?粹憛怒?;
         teachableFields.style.display = "none";
         yoloFields.style.display = "block";
       } else if (modelType === "teachable") {
-        submitHint.textContent = "已選擇 Teachable Machine，可繼續填寫資料並開始轉換";
+        submitHint.textContent = "撌脤??Teachable Machine嚗蝜潛?憛怠神鞈?銝阡?憪???;
         submitButton.disabled = false;
-        heroGuide1.innerHTML = '1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。';
-        heroGuide2.innerHTML = '2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。';
-        formHint.textContent = "目前要求填 email、模型 zip 與至少一張校正圖片。轉換完成後的 email 通知流程先保留欄位，寄信設定下一步再接。";
-        zipHelpText.innerHTML = '請選取 <code>converted_keras.zip</code>';
+        heroGuide1.innerHTML = '1. 隢???<a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine蝬脩?</a> 撱箇?銝西?蝺渲撌梁?璅∪?嚗????臬璅∪?瑼?<code>converted_keras.zip</code>??;
+        heroGuide2.innerHTML = '2. 銝 <code>converted_keras.zip</code> ?撠?撘菜甇????嚗頂蝯勗?怨???蝔??Ｗ <code>imgclassification.nb</code> ??頛楝敺??儔?唳?摰? Mail??;
+        formHint.textContent = "?桀?閬?憛?email?芋??zip ?撠?撘菜甇??????????email ?瘚?????雿?撖縑閮剖?銝?甇亙??乓?;
+        zipHelpText.innerHTML = '隢??<code>converted_keras.zip</code>';
         teachableFields.style.display = "block";
         yoloFields.style.display = "none";
       } else {
-        submitHint.textContent = "請先選擇模型類型";
+        submitHint.textContent = "隢??豢?璅∪?憿?";
         submitButton.disabled = true;
-        heroGuide1.innerHTML = '1. 請先選擇模型類型。';
-        heroGuide2.innerHTML = '2. 選擇後系統會顯示對應的上傳欄位與轉換說明。';
-        formHint.textContent = "請先選擇模型類型，再進行檔案上傳。";
+        heroGuide1.innerHTML = '1. 隢??豢?璅∪?憿???;
+        heroGuide2.innerHTML = '2. ?豢?敺頂蝯望?憿舐內撠????單?雿?頧?隤芣???;
+        formHint.textContent = "隢??豢?璅∪?憿?嚗??脰?瑼?銝??;
         teachableFields.style.display = "none";
         yoloFields.style.display = "none";
       }
@@ -1312,11 +1312,11 @@ def html_page() -> str:
       document.getElementById("yolo-classes-file").value = "";
       document.getElementById("calibration-files").value = "";
       document.getElementById("captcha-input").value = "";
-      document.getElementById("zip-file-name").textContent = "尚未選擇檔案";
-      document.getElementById("yolo-cfg-file-name").textContent = "尚未選擇檔案";
-      document.getElementById("yolo-weights-file-name").textContent = "尚未選擇檔案";
-      document.getElementById("yolo-classes-file-name").textContent = "尚未選擇檔案";
-      document.getElementById("calibration-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("zip-file-name").textContent = "撠?豢?瑼?";
+      document.getElementById("yolo-cfg-file-name").textContent = "撠?豢?瑼?";
+      document.getElementById("yolo-weights-file-name").textContent = "撠?豢?瑼?";
+      document.getElementById("yolo-classes-file-name").textContent = "撠?豢?瑼?";
+      document.getElementById("calibration-file-name").textContent = "撠?豢?瑼?";
       document.getElementById("selected-zip-text").textContent = "";
       document.getElementById("selected-zip-file").style.display = "none";
       const preview = document.getElementById("calibration-preview");
@@ -1338,7 +1338,7 @@ def html_page() -> str:
       const emailInput = document.getElementById("email");
       const captchaInput = document.getElementById("captcha-input");
       if (!modelTypeInput.value) {
-        showFormMessage("請先選擇模型類型。");
+        showFormMessage("隢??豢?璅∪?憿???);
         modelTypeInput.focus();
         return;
       }
@@ -1348,33 +1348,33 @@ def html_page() -> str:
         : (yoloCfgInput.files.length && yoloWeightsInput.files.length);
       if (!modelReady || !calibrationInput.files.length || !emailInput.value.trim() || !captchaInput.value.trim()) {
         if (!emailInput.value.trim()) {
-          showFormMessage("請先輸入通知 email。");
+          showFormMessage("隢?頛詨? email??);
           emailInput.focus();
           return;
         }
         if (!modelReady && isTeachable) {
-          showFormMessage("請先選擇模型壓縮檔 converted_keras.zip。");
+          showFormMessage("隢??豢?璅∪?憯葬瑼?converted_keras.zip??);
           fileInput.click();
           return;
         }
         if (!modelReady && !isTeachable) {
-          showFormMessage("請先提供 YOLO Darknet 的 .cfg 與 .weights。");
+          showFormMessage("隢??? YOLO Darknet ??.cfg ??.weights??);
           yoloCfgInput.click();
           return;
         }
         if (!calibrationInput.files.length) {
-          showFormMessage("請至少選擇 1 張校正圖片。");
+          showFormMessage("隢撠??1 撘菜甇????);
           calibrationInput.click();
           return;
         }
         if (!captchaInput.value.trim()) {
-          showFormMessage("請先輸入數字驗證碼。");
+          showFormMessage("隢?頛詨?詨?撽?蝣潦?);
           captchaInput.focus();
           return;
         }
         return;
       }
-      showFormMessage("上傳中...", "info");
+      showFormMessage("銝銝?..", "info");
       const formData = new FormData();
       formData.append("model_type", modelTypeInput.value);
       formData.append("email", emailInput.value.trim());
@@ -1395,11 +1395,11 @@ def html_page() -> str:
       const response = await fetch("/api/jobs", { method: "POST", body: formData });
       const data = await response.json();
       if (!response.ok) {
-        showFormMessage(data.detail || "建立工作失敗");
+        showFormMessage(data.detail || "撱箇?撌乩?憭望?");
         await refreshCaptcha();
         return;
       }
-      showFormMessage(`工作已建立：${data.job_id}`, "info");
+      showFormMessage(`撌乩?撌脣遣蝡?${data.job_id}`, "info");
       resetUploadForm();
       await refreshCaptcha();
       await refreshJobs();
@@ -1407,7 +1407,7 @@ def html_page() -> str:
 
     document.getElementById("zip-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("zip-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      document.getElementById("zip-file-name").textContent = file ? file.name : "撠?豢?瑼?";
       const selectedBox = document.getElementById("selected-zip-file");
       const selectedText = document.getElementById("selected-zip-text");
       clearFormMessage();
@@ -1422,26 +1422,26 @@ def html_page() -> str:
 
     document.getElementById("yolo-cfg-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-cfg-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      document.getElementById("yolo-cfg-file-name").textContent = file ? file.name : "撠?豢?瑼?";
       clearFormMessage();
     });
 
     document.getElementById("yolo-weights-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-weights-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      document.getElementById("yolo-weights-file-name").textContent = file ? file.name : "撠?豢?瑼?";
       clearFormMessage();
     });
 
     document.getElementById("yolo-classes-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-classes-file-name").textContent = file ? file.name : "尚未選擇檔案";
+      document.getElementById("yolo-classes-file-name").textContent = file ? file.name : "撠?豢?瑼?";
       clearFormMessage();
     });
 
     document.getElementById("calibration-files").addEventListener("change", (event) => {
       const files = Array.from(event.target.files);
       const count = files.length;
-      document.getElementById("calibration-file-name").textContent = count ? `已選擇 ${count} 張圖片` : "尚未選擇檔案";
+      document.getElementById("calibration-file-name").textContent = count ? `撌脤??${count} 撘萄?? : "撠?豢?瑼?";
       clearFormMessage();
 
       const preview = document.getElementById("calibration-preview");
@@ -1508,7 +1508,7 @@ async def get_captcha() -> dict[str, str]:
 async def get_service_icon(icon_name: str) -> FileResponse:
     path = SERVICE_ICON_PATHS.get(icon_name)
     if not path or not path.exists():
-        raise HTTPException(status_code=404, detail="找不到圖示")
+        raise HTTPException(status_code=404, detail="?曆??啣?蝷?)
     return FileResponse(path)
 
 
@@ -1558,32 +1558,32 @@ async def create_job(
 ) -> JSONResponse:
     model_type = model_type.strip()
     if model_type not in {"teachable", "yolo_darknet"}:
-        raise HTTPException(status_code=400, detail="不支援的模型類型")
+        raise HTTPException(status_code=400, detail="銝?渡?璅∪?憿?")
     email = email.strip()
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="請輸入有效 email")
+        raise HTTPException(status_code=400, detail="隢撓?交???email")
     expected_code = app.state.captcha_store.pop(captcha_id, None)
     if not expected_code or captcha_input.strip() != expected_code:
-        raise HTTPException(status_code=400, detail="數字驗證碼錯誤，請重新輸入")
+        raise HTTPException(status_code=400, detail="?詨?撽?蝣潮隤歹?隢??啗撓??)
     if not calibration_files:
-        raise HTTPException(status_code=400, detail="至少需要一張校正圖片")
+        raise HTTPException(status_code=400, detail="?喳??閬?撘菜甇????)
 
     if model_type == "teachable":
         if not file or not file.filename:
-            raise HTTPException(status_code=400, detail="缺少檔名")
+            raise HTTPException(status_code=400, detail="蝻箏?瑼?")
         if not file.filename.lower().endswith(".zip"):
-            raise HTTPException(status_code=400, detail="目前只接受 .zip 檔")
+            raise HTTPException(status_code=400, detail="?桀??芣??.zip 瑼?)
     else:
         if not yolo_cfg_file or not yolo_cfg_file.filename:
-            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .cfg 檔")
+            raise HTTPException(status_code=400, detail="隢?靘?YOLO Darknet ??.cfg 瑼?)
         if not yolo_weights_file or not yolo_weights_file.filename:
-            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .weights 檔")
+            raise HTTPException(status_code=400, detail="隢?靘?YOLO Darknet ??.weights 瑼?)
         if not yolo_cfg_file.filename.lower().endswith(".cfg"):
-            raise HTTPException(status_code=400, detail="YOLO 設定檔必須是 .cfg")
+            raise HTTPException(status_code=400, detail="YOLO 閮剖?瑼?? .cfg")
         if not yolo_weights_file.filename.lower().endswith(".weights"):
-            raise HTTPException(status_code=400, detail="YOLO 權重檔必須是 .weights")
+            raise HTTPException(status_code=400, detail="YOLO 甈?瑼?? .weights")
         if yolo_classes_file and yolo_classes_file.filename and not yolo_classes_file.filename.lower().endswith(".txt"):
-            raise HTTPException(status_code=400, detail="YOLO 類別名稱檔必須是 .txt")
+            raise HTTPException(status_code=400, detail="YOLO 憿?迂瑼?? .txt")
 
     job_id = uuid.uuid4().hex[:12]
     job_dir = JOB_ROOT / job_id
@@ -1627,7 +1627,7 @@ async def create_job(
         saved_count += 1
 
     if saved_count == 0:
-        raise HTTPException(status_code=400, detail="校正圖片只接受 jpg、jpeg、png")
+        raise HTTPException(status_code=400, detail="?⊥迤???芣??jpg?peg?ng")
 
     record = JobRecord(
         job_id=job_id,
@@ -1651,7 +1651,7 @@ async def create_job(
 async def get_job(job_id: str) -> dict[str, object]:
     job = app.state.jobs.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="找不到工作")
+        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
     return job.to_dict()
 
 
@@ -1659,7 +1659,7 @@ async def get_job(job_id: str) -> dict[str, object]:
 async def get_job_log(job_id: str) -> HTMLResponse:
     job = app.state.jobs.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="找不到工作")
+        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
     if not job.log_path or not Path(job.log_path).exists():
         return HTMLResponse("", status_code=200)
     return HTMLResponse(Path(job.log_path).read_text(encoding="utf-8", errors="replace"))
@@ -1680,10 +1680,10 @@ async def download_output(job_id: str) -> FileResponse:
             filename=output_name,
         )
     if not job:
-        raise HTTPException(status_code=404, detail="找不到工作")
+        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
     output_path = Path(job.output_path) if job.output_path else fallback_output
     if not output_path.exists():
-        raise HTTPException(status_code=404, detail="nb 尚未產生")
+        raise HTTPException(status_code=404, detail="nb 撠?Ｙ?")
     return FileResponse(
         output_path,
         media_type="application/octet-stream",
