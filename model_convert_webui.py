@@ -236,38 +236,37 @@ def build_received_mail_html_body(job: JobRecord) -> str:
 
 
 def build_mail_subject(job: JobRecord) -> str:
-    return f"[MQTTGO] 璅∪?頧?{'摰?' if job.status == 'completed' else '憭望?'} - {job.job_id}"
+    return f"[MQTTGO] 模型轉換{'完成' if job.status == 'completed' else '失敗'} - {job.job_id}"
 
 
 def build_mail_text_body(job: JobRecord) -> str:
     links = (
-        "\n?嗡???嚗n"
-        "mqttgo.io嚗ttps://mqttgo.io\n"
-        "mqttgo.vip嚗ttps://mqttgo.vip\n"
-        "nmking.io嚗ttps://www.nmking.io\n"
-        "twgo.io嚗ttps://twgo.io\n"
+        "\n其他服務：\n"
+        "mqttgo.io：https://mqttgo.io\n"
+        "mqttgo.vip：https://mqttgo.vip\n"
+        "nmking.io：https://www.nmking.io\n"
+        "twgo.io：https://twgo.io\n"
     )
     if job.status == "completed":
         output_name = public_output_filename_for_model(job.model_type)
         return (
-            "?典末嚗n\n"
-            "?函?璅∪?頧?撌脣??n\n"
-            f"撌乩?蝺刻?嚗job.job_id}\n"
-            f"銝瑼?嚗job.filename}\n"
-            f"摰???嚗job.finished_at}\n"
-            f"??嚗? {job.elapsed_seconds} 蝘n"
-            f"銝????嚗build_download_url(job.job_id)}\n\n"
-            f"隢蝙?其??寥??銝? {output_name}?n"
+            "您好，\n\n"
+            "您的模型轉換已完成。\n\n"
+            f"工作編號：{job.job_id}\n"
+            f"上傳檔案：{job.filename}\n"
+            f"完成時間：{job.finished_at}\n"
+            f"耗時：約 {job.elapsed_seconds} 秒\n"
+            f"下載連結：{build_download_url(job.job_id)}\n\n"
+            f"請下載檔名為 {output_name} 的模型檔。\n"
             f"{links}"
         )
     return (
-        "?典末嚗n\n"
-        "?函?璅∪?頧??芾摰??n\n"
-        f"撌乩?蝺刻?嚗job.job_id}\n"
-        f"銝瑼?嚗job.filename}\n"
-        f"憭望???嚗job.finished_at}\n"
-        "蝟餌絞???頧?憭望?嚗??亦?蝟餌絞閮??n\n"
-        "隢?敺??唬??喉??蝜怎恣???亦?敺垢閮??n"
+        "您好，\n\n"
+        "您的模型轉換未能完成。\n\n"
+        f"工作編號：{job.job_id}\n"
+        f"上傳檔案：{job.filename}\n"
+        f"失敗時間：{job.finished_at}\n"
+        "請稍後重新上傳，或聯繫管理員協助查看後端記錄。\n\n"
         f"{links}"
     )
 
@@ -276,20 +275,20 @@ def build_mail_html_body(job: JobRecord) -> str:
     output_name = public_output_filename_for_model(job.model_type)
     status_line = (
         f"""
-        <p style="margin:0 0 10px;">銝????嚗?
+        <p style="margin:0 0 10px;">下載連結：
           <a href="{build_download_url(job.job_id)}" style="color:#2563eb;">{build_download_url(job.job_id)}</a>
         </p>
-        <p style="margin:0 0 18px;">隢蝙?其??寥??銝? <code>{output_name}</code>??/p>
+        <p style="margin:0 0 18px;">請下載檔名為 <code>{output_name}</code> 的模型檔。</p>
         """
         if job.status == "completed"
         else """
-        <p style="margin:0 0 18px;">蝟餌絞???頧?憭望?嚗??亦?蝟餌絞閮???/p>
-        <p style="margin:0 0 18px;">隢?敺??唬??喉??蝜怎恣???亦?敺垢閮???/p>
+        <p style="margin:0 0 18px;">您的模型轉換未能完成。</p>
+        <p style="margin:0 0 18px;">請稍後重新上傳，或聯繫管理員協助查看後端記錄。</p>
         """
     )
-    title = "?函?璅∪?頧?撌脣??? if job.status == "completed" else "?函?璅∪?頧??芾摰???
-    time_label = "摰???" if job.status == "completed" else "憭望???"
-    elapsed_html = f'<p style="margin:0 0 10px;">??嚗? {job.elapsed_seconds} 蝘?/p>' if job.status == "completed" else ""
+    title = "模型轉換已完成" if job.status == "completed" else "模型轉換未能完成"
+    time_label = "完成時間" if job.status == "completed" else "失敗時間"
+    elapsed_html = f'<p style="margin:0 0 10px;">耗時：約 {job.elapsed_seconds} 秒</p>' if job.status == "completed" else ""
     return f"""\
 <!doctype html>
 <html lang="zh-Hant">
@@ -298,13 +297,13 @@ def build_mail_html_body(job: JobRecord) -> str:
     <div style="background:#f5bf2c;padding:18px 22px;font-size:24px;font-weight:700;">MQTTGO</div>
     <div style="padding:24px 22px;">
       <h2 style="margin:0 0 14px;font-size:26px;">{title}</h2>
-      <p style="margin:0 0 10px;">撌乩?蝺刻?嚗job.job_id}</p>
-      <p style="margin:0 0 10px;">銝瑼?嚗job.filename}</p>
-      <p style="margin:0 0 10px;">{time_label}嚗job.finished_at}</p>
+      <p style="margin:0 0 10px;">工作編號：{job.job_id}</p>
+      <p style="margin:0 0 10px;">上傳檔案：{job.filename}</p>
+      <p style="margin:0 0 10px;">{time_label}：{job.finished_at}</p>
       {elapsed_html}
       {status_line}
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid #e5e7eb;">
-        <p style="margin:0 0 14px;font-weight:700;">?嗡???</p>
+        <p style="margin:0 0 14px;font-weight:700;">其他服務</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
           <tr>
             <td style="padding:6px;">
@@ -313,7 +312,7 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:mqttgo_icon" alt="mqttgo.io" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.io</div>
-                <div style="font-size:12px;color:#6b7280;">?祥?踹???mqtt ??</div>
+                <div style="font-size:12px;color:#6b7280;">免費匿名的 mqtt 服務</div>
               </a>
             </td>
             <td style="padding:6px;">
@@ -322,7 +321,7 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:mqttgovip_icon" alt="mqttgo.vip" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">mqttgo.vip</div>
-                <div style="font-size:12px;color:#6b7280;">撠平??mqtt ??</div>
+                <div style="font-size:12px;color:#6b7280;">專業的 mqtt 服務</div>
               </a>
             </td>
           </tr>
@@ -333,14 +332,14 @@ def build_mail_html_body(job: JobRecord) -> str:
                   <img src="cid:nmking_icon" alt="nmking.io" style="width:56px;height:56px;display:block;object-fit:contain;">
                 </div>
                 <div style="font-weight:700;margin-bottom:4px;">nmking.io</div>
-                <div style="font-size:12px;color:#6b7280;">?飛蝬脩?</div>
+                <div style="font-size:12px;color:#6b7280;">教學網站</div>
               </a>
             </td>
             <td style="padding:6px;">
               <a href="https://twgo.io" style="display:block;border:1px solid #d1d5db;background:#fafafa;padding:12px;text-decoration:none;color:#111827;">
                 <div style="width:56px;height:56px;border-radius:999px;background:#E62457;color:#ffffff;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 0 10px 0;font-size:20px;">T</div>
                 <div style="font-weight:700;margin-bottom:4px;">twgo.io</div>
-                <div style="font-size:12px;color:#6b7280;">蝪∪?祥頧???</div>
+                <div style="font-size:12px;color:#6b7280;">簡單免費轉址服務</div>
               </a>
             </td>
           </tr>
