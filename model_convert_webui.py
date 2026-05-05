@@ -90,7 +90,7 @@ class JobRecord:
     created_at: str
     model_type: str = "teachable"
     status: str = "queued"
-    message: str = "蝑???"
+    message: str = "排隊中"
     started_at: str | None = None
     finished_at: str | None = None
     return_code: int | None = None
@@ -195,7 +195,7 @@ def public_output_filename_for_model(model_type: str) -> str:
 
 
 def build_received_mail_subject(job: JobRecord) -> str:
-    return f"[MQTTGO] 撌脫?唳芋???極雿?- {job.job_id}"
+    return f"[MQTTGO] 模型轉換工作已收到 - {job.job_id}"
 
 
 def build_received_mail_text_body(job: JobRecord) -> str:
@@ -374,7 +374,7 @@ def send_email_message(subject: str, to_email: str, text_body: str, html_body: s
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = formataddr(("NMKING撠?祕撽恕", settings.from_email))
+    message["From"] = formataddr(("NMKING小霸王實驗室", settings.from_email))
     message["To"] = to_email
     message.set_content(text_body, charset="utf-8")
     message.add_alternative(html_body, subtype="html", charset="utf-8")
@@ -600,7 +600,7 @@ def html_page() -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>8735(AMB82) Teachable Machine 璅∪?頧?</title>
+  <title>8735(AMB82) Teachable Machine 模型轉換</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -1026,126 +1026,126 @@ def html_page() -> str:
   </div>
   <main>
     <section class="card hero">
-      <h1>8735(AMB82) 璅∪?頧? <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
-      <p>?桀??? <strong>Teachable Machine</strong> ??<strong>YOLO Darknet</strong> ?拙芋?????/p>
-      <p id="hero-guide-1">1. 隢???<a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine蝬脩?</a> 撱箇?銝西?蝺渲撌梁?璅∪?嚗????臬璅∪?瑼?<code>converted_keras.zip</code>??/p>
-      <p id="hero-guide-2">2. 銝 <code>converted_keras.zip</code> ?撠?撘菜甇????嚗頂蝯勗?怨???蝔??Ｗ <code>imgclassification.nb</code> ??頛楝敺??儔?唳?摰? Mail??/p>
+      <h1>8735(AMB82) 模型轉換 <a href="https://github.com/youjunjer/8735-AMB82--model-convert" target="_blank" rel="noreferrer">(Github repo)</a></h1>
+      <p>目前支援 <strong>Teachable Machine</strong> 與 <strong>YOLO Darknet</strong> 兩種模型類型。</p>
+      <p id="hero-guide-1">1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。</p>
+      <p id="hero-guide-2">2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。</p>
     </section>
     <section class="grid">
       <section class="card">
         <div class="section-title">
-          <h2>撱箇?頧?撌乩?</h2>
-          <span class="pill">?桐? worker ??</span>
+          <h2>建立轉換工作</h2>
+          <span class="pill">單一 worker 排隊</span>
         </div>
-        <p id="form-hint" class="hint">?桀?閬?憛?email?芋??zip ?撠?撘菜甇??????????email ?瘚?????雿?撖縑閮剖?銝?甇亙??乓?/p>
+        <p id="form-hint" class="hint">目前要求填寫 email、模型檔與至少一張校正圖片。轉換完成後會以 email 通知下載資訊。</p>
         <form id="upload-form" style="margin-top:14px;" novalidate>
           <select id="model-type" name="model_type" required>
-            <option value="" selected>隢??/option>
+            <option value="" selected>請選擇</option>
             <option value="teachable">Teachable Machine</option>
             <option value="yolo_darknet">YOLO Darknet</option>
           </select>
-          <input id="email" type="email" name="email" placeholder="隢撓?仿 email" required>
+          <input id="email" type="email" name="email" placeholder="請輸入通知 email" required>
           <div id="teachable-fields">
             <label class="dropzone" for="zip-file">
-              <strong>璅∪?憯葬瑼?/strong>
-              <span id="zip-help-text">隢??<code>converted_keras.zip</code></span>
+              <strong>模型壓縮檔</strong>
+              <span id="zip-help-text">請選取 <code>converted_keras.zip</code></span>
               <input id="zip-file" type="file" name="file" accept=".zip" style="display:none;">
-              <span id="zip-file-name">撠?豢?瑼?</span>
+              <span id="zip-file-name">尚未選擇檔案</span>
               <div id="selected-zip-file" class="selected-file">
-                <strong>?桀??豢??芋??/strong>
+                <strong>目前已選模型</strong>
                 <code id="selected-zip-text"></code>
               </div>
             </label>
           </div>
           <div id="yolo-darknet-fields" style="display:none;">
             <label class="dropzone" for="yolo-cfg-file">
-              <strong>YOLO 閮剖?瑼?/strong>
-              <span>隢??<code>.cfg</code></span>
+              <strong>YOLO 組態檔</strong>
+              <span>請選取 <code>.cfg</code></span>
               <input id="yolo-cfg-file" type="file" name="yolo_cfg_file" accept=".cfg" style="display:none;">
-              <span id="yolo-cfg-file-name">撠?豢?瑼?</span>
+              <span id="yolo-cfg-file-name">尚未選擇檔案</span>
             </label>
             <label class="dropzone" for="yolo-weights-file">
-              <strong>YOLO 甈?瑼?/strong>
-              <span>隢??<code>.weights</code></span>
+              <strong>YOLO 權重檔</strong>
+              <span>請選取 <code>.weights</code></span>
               <input id="yolo-weights-file" type="file" name="yolo_weights_file" accept=".weights" style="display:none;">
-              <span id="yolo-weights-file-name">撠?豢?瑼?</span>
+              <span id="yolo-weights-file-name">尚未選擇檔案</span>
             </label>
             <label class="dropzone" for="yolo-classes-file">
-              <strong>YOLO 憿?迂</strong>
-              <span>?舫嚗??詨? <code>classes.txt</code></span>
+              <strong>YOLO 類別文字檔</strong>
+              <span>選填，可提供 <code>classes.txt</code></span>
               <input id="yolo-classes-file" type="file" name="yolo_classes_file" accept=".txt" style="display:none;">
-              <span id="yolo-classes-file-name">撠?豢?瑼?</span>
+              <span id="yolo-classes-file-name">尚未選擇檔案</span>
             </label>
           </div>
           <label class="dropzone" for="calibration-files">
-            <strong>?⊥迤??</strong>
-            <span>?喳? 1 撘蛛??臬???jpg / jpeg / png</span>
+            <strong>校正圖片</strong>
+            <span>至少 1 張，可多選 jpg / jpeg / png</span>
             <input id="calibration-files" type="file" name="calibration_files" accept=".jpg,.jpeg,.png" multiple style="display:none;">
-            <span id="calibration-file-name">撠?豢?瑼?</span>
+            <span id="calibration-file-name">尚未選擇檔案</span>
           </label>
           <div id="calibration-preview" class="preview-grid" style="display:none;"></div>
           <div class="captcha-box">
             <div id="captcha-code" class="captcha-code">----</div>
-            <input id="captcha-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="隢撓?交摮?霅Ⅳ" required>
+            <input id="captcha-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="請輸入數字驗證碼" required>
           </div>
-          <button type="submit" disabled>??頧?</button>
-          <div id="submit-hint" class="hint" style="margin-top:10px;">隢??豢?璅∪?憿?</div>
+          <button type="submit" disabled>開始轉換</button>
+          <div id="submit-hint" class="hint" style="margin-top:10px;">請先選擇模型類型</div>
         </form>
         <div id="submit-result" class="form-message" style="margin-top:12px;"></div>
       </section>
       <section class="card">
         <div class="section-title">
-          <h2>?????/h2>
-          <span class="pill">??思?撖?/span>
+          <h2>服務狀態</h2>
+          <span class="pill">通知暫不寄送</span>
         </div>
         <div class="status-board" style="margin-top:14px;">
           <div id="service-status-main" class="status-main status-resting">
             <div>
-              <div class="status-note">?桀?隡箸??函???/div>
-              <strong id="service-status-label">?蔭</strong>
+              <div class="status-note">目前伺服器狀態</div>
+              <strong id="service-status-label">閒置</strong>
             </div>
-            <span class="pill" id="service-queue-pill">?? 0 蝑?/span>
+            <span class="pill" id="service-queue-pill">排隊 0 筆</span>
           </div>
           <div class="meta">
-            <div>WSL ?潸???<strong>AMB_Model</strong></div>
-            <div>??璅∪?嚗?strong>?桐? worker ??</strong></div>
-            <div>?桀?頧?銝哨?<strong id="service-running-count">0</strong> 蝑?/div>
-            <div>?桀???銝哨?<strong id="service-queue-count">0</strong> 蝑?/div>
-            <div>蝝航?摰?嚗?strong id="service-total-completed-count">0</strong> 蝑?/div>
+            <div>WSL 發行版：<strong>AMB_Model</strong></div>
+            <div>處理模式：<strong>單一 worker 排隊</strong></div>
+            <div>目前轉換中：<strong id="service-running-count">0</strong> 筆</div>
+            <div>目前排隊中：<strong id="service-queue-count">0</strong> 筆</div>
+            <div>累計完成：<strong id="service-total-completed-count">0</strong> 筆</div>
           </div>
           <div class="queue-list">
-            <strong>頧?銝剔?撌乩?蝺刻?</strong>
+            <strong>轉換中的工作編號</strong>
             <div id="service-running-job-ids" class="queue-job-ids">
-              <span class="queue-empty">?桀?瘝?頧?銝剔?撌乩?</span>
+              <span class="queue-empty">目前沒有轉換中的工作</span>
             </div>
           </div>
           <div class="queue-list">
-            <strong>??銝剔?撌乩?蝺刻?</strong>
+            <strong>排隊中的工作編號</strong>
             <div id="service-queue-job-ids" class="queue-job-ids">
-              <span class="queue-empty">?桀?瘝???撌乩?</span>
+              <span class="queue-empty">目前沒有排隊中的工作</span>
             </div>
           </div>
         </div>
         <div class="actions" style="margin-top:16px;">
-          <button id="refresh-jobs" class="secondary" type="button">??渡?撌乩??”</button>
+          <button id="refresh-jobs" class="secondary" type="button">重新整理工作列表</button>
         </div>
       </section>
     </section>
     <section class="card">
       <div class="section-title">
-        <h2>蝭?銝?</h2>
+        <h2>範例下載</h2>
       </div>
       <div class="service-links">
         <a class="service-link" href="/api/examples/arduino-imgclassification">
           <div class="service-icon twgo">A</div>
-          <strong>8735(AMB82) Image Classification Arduino 蝭?</strong>
-          <span>銝? Arduino 蝭?撠?嚗?璅∪??曉 <code>NN_MDL/imgclassification.nb</code> 敺?舀葫閰艾?/span>
+          <strong>8735(AMB82) Image Classification Arduino 範例</strong>
+          <span>下載 Arduino 範例後，請將轉換完成的模型放到 <code>NN_MDL/imgclassification.nb</code> 後再測試。</span>
         </a>
       </div>
     </section>
     <section class="card">
       <div class="section-title">
-        <h2>?嗡???</h2>
+        <h2>其他服務</h2>
       </div>
       <div class="service-links">
         <a class="service-link" href="https://mqttgo.io" target="_blank" rel="noreferrer">
@@ -1153,26 +1153,26 @@ def html_page() -> str:
             <img src="/api/service-icon/mqttgo" alt="mqttgo.io logo">
           </div>
           <strong>mqttgo.io</strong>
-          <span>?祥?踹???mqtt ??</span>
+          <span>免費匿名的 mqtt 服務</span>
         </a>
         <a class="service-link" href="https://mqttgo.vip" target="_blank" rel="noreferrer">
           <div class="service-icon">
             <img src="/api/service-icon/mqttgovip" alt="mqttgo.vip logo">
           </div>
           <strong>mqttgo.vip</strong>
-          <span>撠平??mqtt ??</span>
+          <span>專業的 mqtt 服務</span>
         </a>
         <a class="service-link" href="https://nmking.io" target="_blank" rel="noreferrer">
           <div class="service-icon">
             <img src="/api/service-icon/nmking" alt="nmking.io logo">
           </div>
           <strong>nmking.io</strong>
-          <span>?飛蝬脩?</span>
+          <span>教學網站</span>
         </a>
         <a class="service-link" href="https://twgo.io" target="_blank" rel="noreferrer">
           <div class="service-icon twgo">T</div>
           <strong>twgo.io</strong>
-          <span>蝪∪?祥頧???</span>
+          <span>簡單免費轉址服務</span>
         </a>
       </div>
     </section>
@@ -1210,7 +1210,7 @@ def html_page() -> str:
       const queueJobIds = document.getElementById("service-queue-job-ids");
 
       label.textContent = summary.status_label;
-      queuePill.textContent = `?? ${summary.queue_count} 蝑;
+      queuePill.textContent = `排隊 ${summary.queue_count} 筆`;
       runningCount.textContent = summary.running_count;
       queueCount.textContent = summary.queue_count;
       totalCompletedCount.textContent = summary.total_completed_count;
@@ -1225,7 +1225,7 @@ def html_page() -> str:
       } else {
         const empty = document.createElement("span");
         empty.className = "queue-empty";
-        empty.textContent = "?桀?瘝?頧?銝剔?撌乩?";
+        empty.textContent = "目前沒有轉換中的工作";
         runningJobIds.appendChild(empty);
       }
       queueJobIds.innerHTML = "";
@@ -1239,12 +1239,12 @@ def html_page() -> str:
       } else {
         const empty = document.createElement("span");
         empty.className = "queue-empty";
-        empty.textContent = "?桀?瘝???撌乩?";
+        empty.textContent = "目前沒有排隊中的工作";
         queueJobIds.appendChild(empty);
       }
 
       main.classList.remove("status-resting", "status-busy");
-      main.classList.add(summary.status_label === "頧?銝? ? "status-busy" : "status-resting");
+      main.classList.add(summary.status_label === "轉換中" ? "status-busy" : "status-resting");
     }
 
     async function refreshJobs() {
@@ -1275,28 +1275,28 @@ def html_page() -> str:
       const yoloFields = document.getElementById("yolo-darknet-fields");
 
       if (modelType === "yolo_darknet") {
-        submitHint.textContent = "撌脤??YOLO Darknet嚗蝜潛?憛怠神鞈?銝阡?憪???;
+        submitHint.textContent = "已選擇 YOLO Darknet，可繼續填寫資料並開始轉換";
         submitButton.disabled = false;
-        heroGuide1.innerHTML = '1. 隢???YOLO Darknet 璅∪?瑼??喳??閬?<code>.cfg</code> ??<code>.weights</code>嚗?code>classes.txt</code> ?舫??;
-        heroGuide2.innerHTML = '2. 蝟餌絞??閰血? YOLO Darknet 璅∪?頧 <code>yolov4_tiny.nb</code>?蝚砌???beta 瘚???;
-        formHint.textContent = "YOLO Darknet 蝚砌???beta嚗?蝙??.cfg / .weights ?甇???脰?頧?嚗lasses.txt ?粹憛怒?;
+        heroGuide1.innerHTML = '1. 請準備 YOLO Darknet 模型需要的 <code>.cfg</code> 與 <code>.weights</code>，若有類別名稱可再附上 <code>classes.txt</code>。';
+        heroGuide2.innerHTML = '2. 系統會將 YOLO Darknet 模型轉成 <code>yolov4_tiny.nb</code>。目前此流程為 beta 版本。';
+        formHint.textContent = "YOLO Darknet 轉換目前為 beta，請上傳 .cfg、.weights 與校正圖片，classes.txt 為選填。";
         teachableFields.style.display = "none";
         yoloFields.style.display = "block";
       } else if (modelType === "teachable") {
-        submitHint.textContent = "撌脤??Teachable Machine嚗蝜潛?憛怠神鞈?銝阡?憪???;
+        submitHint.textContent = "已選擇 Teachable Machine，可繼續填寫資料並開始轉換";
         submitButton.disabled = false;
-        heroGuide1.innerHTML = '1. 隢???<a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine蝬脩?</a> 撱箇?銝西?蝺渲撌梁?璅∪?嚗????臬璅∪?瑼?<code>converted_keras.zip</code>??;
-        heroGuide2.innerHTML = '2. 銝 <code>converted_keras.zip</code> ?撠?撘菜甇????嚗頂蝯勗?怨???蝔??Ｗ <code>imgclassification.nb</code> ??頛楝敺??儔?唳?摰? Mail??;
-        formHint.textContent = "?桀?閬?憛?email?芋??zip ?撠?撘菜甇??????????email ?瘚?????雿?撖縑閮剖?銝?甇亙??乓?;
-        zipHelpText.innerHTML = '隢??<code>converted_keras.zip</code>';
+        heroGuide1.innerHTML = '1. 請先到 <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noreferrer">Google Teachable Machine網站</a> 建立並訓練自己的模型，完成後匯出模型檔 <code>converted_keras.zip</code>。';
+        heroGuide2.innerHTML = '2. 上傳 <code>converted_keras.zip</code> 與至少一張校正圖片後，系統呼叫轉換流程，產出 <code>imgclassification.nb</code> 的下載路徑，回復到指定的 Mail。';
+        formHint.textContent = "目前要求填寫 email、模型檔與至少一張校正圖片。轉換完成後會以 email 通知下載資訊。";
+        zipHelpText.innerHTML = '請選取 <code>converted_keras.zip</code>';
         teachableFields.style.display = "block";
         yoloFields.style.display = "none";
       } else {
-        submitHint.textContent = "隢??豢?璅∪?憿?";
+        submitHint.textContent = "請先選擇模型類型";
         submitButton.disabled = true;
-        heroGuide1.innerHTML = '1. 隢??豢?璅∪?憿???;
-        heroGuide2.innerHTML = '2. ?豢?敺頂蝯望?憿舐內撠????單?雿?頧?隤芣???;
-        formHint.textContent = "隢??豢?璅∪?憿?嚗??脰?瑼?銝??;
+        heroGuide1.innerHTML = '1. 請先選擇模型類型。';
+        heroGuide2.innerHTML = '2. 選擇後會顯示對應的上傳欄位與轉換說明。';
+        formHint.textContent = "請先選擇模型類型，再上傳對應檔案。";
         teachableFields.style.display = "none";
         yoloFields.style.display = "none";
       }
@@ -1311,11 +1311,11 @@ def html_page() -> str:
       document.getElementById("yolo-classes-file").value = "";
       document.getElementById("calibration-files").value = "";
       document.getElementById("captcha-input").value = "";
-      document.getElementById("zip-file-name").textContent = "撠?豢?瑼?";
-      document.getElementById("yolo-cfg-file-name").textContent = "撠?豢?瑼?";
-      document.getElementById("yolo-weights-file-name").textContent = "撠?豢?瑼?";
-      document.getElementById("yolo-classes-file-name").textContent = "撠?豢?瑼?";
-      document.getElementById("calibration-file-name").textContent = "撠?豢?瑼?";
+      document.getElementById("zip-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-cfg-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-weights-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("yolo-classes-file-name").textContent = "尚未選擇檔案";
+      document.getElementById("calibration-file-name").textContent = "尚未選擇檔案";
       document.getElementById("selected-zip-text").textContent = "";
       document.getElementById("selected-zip-file").style.display = "none";
       const preview = document.getElementById("calibration-preview");
@@ -1337,7 +1337,7 @@ def html_page() -> str:
       const emailInput = document.getElementById("email");
       const captchaInput = document.getElementById("captcha-input");
       if (!modelTypeInput.value) {
-        showFormMessage("隢??豢?璅∪?憿???);
+        showFormMessage("請先選擇模型類型");
         modelTypeInput.focus();
         return;
       }
@@ -1347,33 +1347,33 @@ def html_page() -> str:
         : (yoloCfgInput.files.length && yoloWeightsInput.files.length);
       if (!modelReady || !calibrationInput.files.length || !emailInput.value.trim() || !captchaInput.value.trim()) {
         if (!emailInput.value.trim()) {
-          showFormMessage("隢?頛詨? email??);
+          showFormMessage("請輸入通知 email");
           emailInput.focus();
           return;
         }
         if (!modelReady && isTeachable) {
-          showFormMessage("隢??豢?璅∪?憯葬瑼?converted_keras.zip??);
+          showFormMessage("請選擇模型壓縮檔 converted_keras.zip");
           fileInput.click();
           return;
         }
         if (!modelReady && !isTeachable) {
-          showFormMessage("隢??? YOLO Darknet ??.cfg ??.weights??);
+          showFormMessage("請選擇 YOLO Darknet 的 .cfg 與 .weights");
           yoloCfgInput.click();
           return;
         }
         if (!calibrationInput.files.length) {
-          showFormMessage("隢撠??1 撘菜甇????);
+          showFormMessage("請至少上傳 1 張校正圖片");
           calibrationInput.click();
           return;
         }
         if (!captchaInput.value.trim()) {
-          showFormMessage("隢?頛詨?詨?撽?蝣潦?);
+          showFormMessage("請輸入數字驗證碼");
           captchaInput.focus();
           return;
         }
         return;
       }
-      showFormMessage("銝銝?..", "info");
+      showFormMessage("上傳中...", "info");
       const formData = new FormData();
       formData.append("model_type", modelTypeInput.value);
       formData.append("email", emailInput.value.trim());
@@ -1394,11 +1394,11 @@ def html_page() -> str:
       const response = await fetch("/api/jobs", { method: "POST", body: formData });
       const data = await response.json();
       if (!response.ok) {
-        showFormMessage(data.detail || "撱箇?撌乩?憭望?");
+        showFormMessage(data.detail || "建立工作失敗");
         await refreshCaptcha();
         return;
       }
-      showFormMessage(`撌乩?撌脣遣蝡?${data.job_id}`, "info");
+      showFormMessage(`工作已建立：${data.job_id}`, "info");
       resetUploadForm();
       await refreshCaptcha();
       await refreshJobs();
@@ -1406,7 +1406,7 @@ def html_page() -> str:
 
     document.getElementById("zip-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("zip-file-name").textContent = file ? file.name : "撠?豢?瑼?";
+      document.getElementById("zip-file-name").textContent = file ? file.name : "尚未選擇檔案";
       const selectedBox = document.getElementById("selected-zip-file");
       const selectedText = document.getElementById("selected-zip-text");
       clearFormMessage();
@@ -1421,26 +1421,26 @@ def html_page() -> str:
 
     document.getElementById("yolo-cfg-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-cfg-file-name").textContent = file ? file.name : "撠?豢?瑼?";
+      document.getElementById("yolo-cfg-file-name").textContent = file ? file.name : "尚未選擇檔案";
       clearFormMessage();
     });
 
     document.getElementById("yolo-weights-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-weights-file-name").textContent = file ? file.name : "撠?豢?瑼?";
+      document.getElementById("yolo-weights-file-name").textContent = file ? file.name : "尚未選擇檔案";
       clearFormMessage();
     });
 
     document.getElementById("yolo-classes-file").addEventListener("change", (event) => {
       const file = event.target.files[0];
-      document.getElementById("yolo-classes-file-name").textContent = file ? file.name : "撠?豢?瑼?";
+      document.getElementById("yolo-classes-file-name").textContent = file ? file.name : "尚未選擇檔案";
       clearFormMessage();
     });
 
     document.getElementById("calibration-files").addEventListener("change", (event) => {
       const files = Array.from(event.target.files);
       const count = files.length;
-      document.getElementById("calibration-file-name").textContent = count ? `撌脤??${count} 撘萄?? : "撠?豢?瑼?";
+      document.getElementById("calibration-file-name").textContent = count ? `已選擇 ${count} 張圖片` : "尚未選擇檔案";
       clearFormMessage();
 
       const preview = document.getElementById("calibration-preview");
