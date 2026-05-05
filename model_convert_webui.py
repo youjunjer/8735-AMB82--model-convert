@@ -1519,7 +1519,7 @@ async def download_arduino_imgclassification_example() -> FileResponse:
     return FileResponse(
         path,
         media_type="application/zip",
-        filename="ameba_imgclassification_final.zip",
+        filename="RTSPImageClassification.zip",
     )
 
 
