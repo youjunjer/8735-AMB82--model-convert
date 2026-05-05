@@ -483,7 +483,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
     started = datetime.now()
     with job.lock:
         job.status = "running"
-        job.message = "WSL 頧?銝? if job.model_type == "teachable" else "YOLO Darknet 瘚?瑼Ｘ銝?
+        job.message = "WSL 轉換中" if job.model_type == "teachable" else "YOLO Darknet 轉換中"
         job.started_at = now_text()
         job.queue_position = None
 
@@ -510,7 +510,7 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
             if generated_output_path != output_path:
                 shutil.copyfile(generated_output_path, output_path)
             job.status = "completed"
-            job.message = "頧?摰?"
+            job.message = "轉換完成"
             job.output_path = str(output_path)
             job.notification_status = "ready_to_notify_success"
             increment_total_completed_count()
@@ -518,17 +518,17 @@ def run_job(job: JobRecord, zip_path: Path, work_dir: Path, calibration_dir: Pat
             yolo_output_path = public_output_path_for_model(work_dir, job.model_type)
             if yolo_output_path.exists():
                 job.status = "completed"
-                job.message = "頧?摰?"
+                job.message = "轉換完成"
                 job.output_path = str(yolo_output_path)
                 job.notification_status = "ready_to_notify_success"
                 increment_total_completed_count()
             else:
                 job.status = "failed"
-                job.message = "YOLO Darknet 頧?憭望?嚗??亦? log"
+                job.message = "YOLO Darknet 轉換失敗，請查看系統記錄。"
                 job.notification_status = "ready_to_notify_failed"
         else:
             job.status = "failed"
-            job.message = "頧?憭望?嚗??亦? log"
+            job.message = "轉換失敗，請查看系統記錄。"
             job.notification_status = "ready_to_notify_failed"
 
     try:
@@ -543,7 +543,7 @@ def refresh_queue_positions() -> None:
         if job.status == "queued":
             try:
                 job.queue_position = pending_ids.index(job.job_id) + 1
-                job.message = f"??銝哨?蝚?{job.queue_position} 雿?
+                job.message = f"排隊中，目前第 {job.queue_position} 筆"
             except ValueError:
                 job.queue_position = None
 
@@ -555,7 +555,7 @@ def service_summary() -> dict[str, object]:
     completed = [job for job in jobs if job.status == "completed"]
     failed = [job for job in jobs if job.status == "failed"]
     return {
-        "status_label": "頧?銝? if running else "?蔭",
+        "status_label": "轉換中" if running else "閒置",
         "queue_count": len(queued),
         "queue_job_ids": [job.job_id for job in queued],
         "running_count": len(running),
@@ -1507,7 +1507,7 @@ async def get_captcha() -> dict[str, str]:
 async def get_service_icon(icon_name: str) -> FileResponse:
     path = SERVICE_ICON_PATHS.get(icon_name)
     if not path or not path.exists():
-        raise HTTPException(status_code=404, detail="?曆??啣?蝷?)
+        raise HTTPException(status_code=404, detail="Service icon not found.")
     return FileResponse(path)
 
 
@@ -1557,32 +1557,32 @@ async def create_job(
 ) -> JSONResponse:
     model_type = model_type.strip()
     if model_type not in {"teachable", "yolo_darknet"}:
-        raise HTTPException(status_code=400, detail="銝?渡?璅∪?憿?")
+        raise HTTPException(status_code=400, detail="請先選擇模型類型。")
     email = email.strip()
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="隢撓?交???email")
+        raise HTTPException(status_code=400, detail="請輸入有效的 email。")
     expected_code = app.state.captcha_store.pop(captcha_id, None)
     if not expected_code or captcha_input.strip() != expected_code:
-        raise HTTPException(status_code=400, detail="?詨?撽?蝣潮隤歹?隢??啗撓??)
+        raise HTTPException(status_code=400, detail="驗證碼錯誤，請重新輸入。")
     if not calibration_files:
-        raise HTTPException(status_code=400, detail="?喳??閬?撘菜甇????)
+        raise HTTPException(status_code=400, detail="請至少上傳 1 張校正圖片。")
 
     if model_type == "teachable":
         if not file or not file.filename:
-            raise HTTPException(status_code=400, detail="蝻箏?瑼?")
+            raise HTTPException(status_code=400, detail="請選取模型壓縮檔。")
         if not file.filename.lower().endswith(".zip"):
-            raise HTTPException(status_code=400, detail="?桀??芣??.zip 瑼?)
+            raise HTTPException(status_code=400, detail="模型檔必須是 .zip。")
     else:
         if not yolo_cfg_file or not yolo_cfg_file.filename:
-            raise HTTPException(status_code=400, detail="隢?靘?YOLO Darknet ??.cfg 瑼?)
+            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .cfg 檔。")
         if not yolo_weights_file or not yolo_weights_file.filename:
-            raise HTTPException(status_code=400, detail="隢?靘?YOLO Darknet ??.weights 瑼?)
+            raise HTTPException(status_code=400, detail="請提供 YOLO Darknet 的 .weights 檔。")
         if not yolo_cfg_file.filename.lower().endswith(".cfg"):
-            raise HTTPException(status_code=400, detail="YOLO 閮剖?瑼?? .cfg")
+            raise HTTPException(status_code=400, detail="YOLO 設定檔副檔名必須是 .cfg。")
         if not yolo_weights_file.filename.lower().endswith(".weights"):
-            raise HTTPException(status_code=400, detail="YOLO 甈?瑼?? .weights")
+            raise HTTPException(status_code=400, detail="YOLO 權重檔副檔名必須是 .weights。")
         if yolo_classes_file and yolo_classes_file.filename and not yolo_classes_file.filename.lower().endswith(".txt"):
-            raise HTTPException(status_code=400, detail="YOLO 憿?迂瑼?? .txt")
+            raise HTTPException(status_code=400, detail="YOLO 類別檔副檔名必須是 .txt。")
 
     job_id = uuid.uuid4().hex[:12]
     job_dir = JOB_ROOT / job_id
@@ -1626,7 +1626,7 @@ async def create_job(
         saved_count += 1
 
     if saved_count == 0:
-        raise HTTPException(status_code=400, detail="?⊥迤???芣??jpg?peg?ng")
+        raise HTTPException(status_code=400, detail="請至少上傳 1 張 jpg、jpeg 或 png 校正圖片。")
 
     record = JobRecord(
         job_id=job_id,
@@ -1650,7 +1650,7 @@ async def create_job(
 async def get_job(job_id: str) -> dict[str, object]:
     job = app.state.jobs.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
+        raise HTTPException(status_code=404, detail="Job not found.")
     return job.to_dict()
 
 
@@ -1658,7 +1658,7 @@ async def get_job(job_id: str) -> dict[str, object]:
 async def get_job_log(job_id: str) -> HTMLResponse:
     job = app.state.jobs.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
+        raise HTTPException(status_code=404, detail="Job not found.")
     if not job.log_path or not Path(job.log_path).exists():
         return HTMLResponse("", status_code=200)
     return HTMLResponse(Path(job.log_path).read_text(encoding="utf-8", errors="replace"))
@@ -1679,10 +1679,10 @@ async def download_output(job_id: str) -> FileResponse:
             filename=output_name,
         )
     if not job:
-        raise HTTPException(status_code=404, detail="?曆??啣極雿?)
+        raise HTTPException(status_code=404, detail="Job not found.")
     output_path = Path(job.output_path) if job.output_path else fallback_output
     if not output_path.exists():
-        raise HTTPException(status_code=404, detail="nb 撠?Ｙ?")
+        raise HTTPException(status_code=404, detail="NB file not found.")
     return FileResponse(
         output_path,
         media_type="application/octet-stream",
