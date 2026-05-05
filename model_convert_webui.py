@@ -63,6 +63,9 @@ SERVICE_ICON_PATHS = {
     "mqttgovip": BASE_DIR / "service_icons" / "mqttgovip_thumb.png",
     "nmking": BASE_DIR / "service_icons" / "nmking.jpg",
 }
+EXAMPLE_DOWNLOAD_PATHS = {
+    "arduino_imgclassification": BASE_DIR / "example_downloads" / "ameba_imgclassification_final.zip",
+}
 
 
 @dataclass
@@ -1162,6 +1165,18 @@ def html_page() -> str:
         </a>
       </div>
     </section>
+    <section class="card">
+      <div class="section-title">
+        <h2>範例下載</h2>
+      </div>
+      <div class="service-links">
+        <a class="service-link" href="/api/examples/arduino-imgclassification">
+          <div class="service-icon twgo">A</div>
+          <strong>8735(AMB82) Image Classification Arduino 範例</strong>
+          <span>下載 Arduino 範例專案，將模型放到 <code>NN_MDL/imgclassification.nb</code> 後即可測試。</span>
+        </a>
+      </div>
+    </section>
   </main>
   <script>
     function showFormMessage(message, type = "error") {
@@ -1495,6 +1510,18 @@ async def get_service_icon(icon_name: str) -> FileResponse:
     if not path or not path.exists():
         raise HTTPException(status_code=404, detail="找不到圖示")
     return FileResponse(path)
+
+
+@app.get("/api/examples/arduino-imgclassification")
+async def download_arduino_imgclassification_example() -> FileResponse:
+    path = EXAMPLE_DOWNLOAD_PATHS["arduino_imgclassification"]
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Example archive not found.")
+    return FileResponse(
+        path,
+        media_type="application/zip",
+        filename="ameba_imgclassification_final.zip",
+    )
 
 
 @app.get("/favicon.ico")
